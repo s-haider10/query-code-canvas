@@ -22,22 +22,22 @@ const CodeDisplay = ({ code }: CodeDisplayProps) => {
     let highlightedCode = code;
     
     // Replace strings (both single and double quotes)
-    highlightedCode = highlightedCode.replace(/'([^']*)'/g, "<span class='string'>'$1'</span>");
-    highlightedCode = highlightedCode.replace(/"([^"]*)"/g, "<span class='string'>\"$1\"</span>");
+    highlightedCode = highlightedCode.replace(/'([^']*)'/g, "<span class='text-green-400'>'$1'</span>");
+    highlightedCode = highlightedCode.replace(/"([^"]*)"/g, "<span class='text-green-400'>\"$1\"</span>");
     
     // Replace numbers
-    highlightedCode = highlightedCode.replace(/\b(\d+\.?\d*|\.\d+)\b/g, "<span class='number'>$1</span>");
+    highlightedCode = highlightedCode.replace(/\b(\d+\.?\d*|\.\d+)\b/g, "<span class='text-yellow-400'>$1</span>");
     
     // Replace comments
-    highlightedCode = highlightedCode.replace(/(#.*)$/mg, "<span class='comment'>$1</span>");
+    highlightedCode = highlightedCode.replace(/(#.*)$/mg, "<span class='text-gray-500'>$1</span>");
     
     // Replace functions
-    highlightedCode = highlightedCode.replace(/(\w+)\(/g, "<span class='function'>$1</span>(");
+    highlightedCode = highlightedCode.replace(/(\w+)\(/g, "<span class='text-blue-400'>$1</span>(");
     
     // Replace keywords (must be done last to avoid replacing parts of other tokens)
     keywords.forEach((keyword) => {
       const regex = new RegExp(`\\b${keyword}\\b`, 'g');
-      highlightedCode = highlightedCode.replace(regex, `<span class='keyword'>${keyword}</span>`);
+      highlightedCode = highlightedCode.replace(regex, `<span class='text-purple-400'>${keyword}</span>`);
     });
     
     // Split by newlines and wrap in spans
@@ -57,14 +57,14 @@ const CodeDisplay = ({ code }: CodeDisplayProps) => {
   };
 
   return (
-    <Card>
+    <Card className="bg-gray-800 border-blue-500/20">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-md font-medium">Generated Python Code</CardTitle>
+        <CardTitle className="text-md font-medium text-blue-400">Generated Python Code</CardTitle>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={handleCopyCode}
-          className="h-8"
+          className={`h-8 ${copied ? 'bg-green-600 text-white' : 'border-blue-500/20 text-blue-400 hover:bg-blue-900/30'}`}
         >
           {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
           {copied ? 'Copied' : 'Copy'}
@@ -73,7 +73,7 @@ const CodeDisplay = ({ code }: CodeDisplayProps) => {
       <CardContent>
         <div className="relative">
           <pre 
-            className="code-block bg-code-background text-code-text p-4 rounded-md text-sm overflow-x-auto max-h-72 overscroll-y-auto"
+            className="bg-gray-900 text-gray-300 p-4 rounded-md text-sm overflow-x-auto max-h-72 overscroll-y-auto border border-blue-500/20"
             dangerouslySetInnerHTML={{ __html: highlightCode(code) }}
           />
         </div>

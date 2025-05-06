@@ -9,9 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Loader2, Upload, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Loader2, Upload, RefreshCw, ArrowLeft, MonitorSmartphone, Code, BarChart3, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CodeDisplay from '@/components/CodeDisplay';
+import VisualizationDisplay from '@/components/VisualizationDisplay';
+import ExplanationDisplay from '@/components/ExplanationDisplay';
 
 interface Dataset {
   id: string;
@@ -31,6 +33,13 @@ interface DatasetInfo {
   columns_count: number;
 }
 
+interface AnalysisResult {
+  code: string;
+  image: string;
+  explanation?: string;
+  success: boolean;
+}
+
 const API_BASE_URL = 'http://localhost:5001/api';
 
 const AdvancedAnalysis = () => {
@@ -39,8 +48,8 @@ const AdvancedAnalysis = () => {
   const [datasetInfo, setDatasetInfo] = useState<DatasetInfo | null>(null);
   const [query, setQuery] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
-  const [resultCode, setResultCode] = useState<string>('');
-  const [resultImage, setResultImage] = useState<string>('');
+  const [resultData, setResultData] = useState<AnalysisResult | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('visualization');
 
   // Fetch available datasets
   const { data: datasets, isLoading: isLoadingDatasets, refetch: refetchDatasets } = useQuery({
@@ -83,8 +92,7 @@ const AdvancedAnalysis = () => {
     fetchDatasetInfo.mutate(datasetId);
     // Reset query and results
     setQuery('');
-    setResultCode('');
-    setResultImage('');
+    setResultData(null);
   };
 
   // Handle file selection for upload
@@ -155,8 +163,14 @@ const AdvancedAnalysis = () => {
       return response.json();
     },
     onSuccess: (data) => {
-      setResultCode(data.code);
-      setResultImage(`data:image/png;base64,${data.image}`);
+      setResultData({
+        code: data.code,
+        image: `data:image/png;base64,${data.image}`,
+        explanation: data.explanation || "No explanation available for this visualization.",
+        success: data.success
+      });
+      // Automatically switch to visualization tab when result is ready
+      setActiveTab('visualization');
     },
     onError: (error) => {
       toast({
@@ -168,15 +182,15 @@ const AdvancedAnalysis = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 text-white">
+      <header className="bg-gray-800 shadow-lg border-b border-blue-500/20">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Advanced Data Analysis</h1>
-            <p className="text-muted-foreground">Generate data visualizations with AI</p>
+            <h1 className="text-2xl font-bold text-blue-400">Advanced Data Analysis</h1>
+            <p className="text-gray-400">Generate data visualizations with AI</p>
           </div>
           <Link to="/">
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button variant="outline" className="flex items-center gap-2 border-blue-500/50 text-blue-400 hover:bg-blue-900/30">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
             </Button>
@@ -186,19 +200,25 @@ const AdvancedAnalysis = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="analyze" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto mb-6">
-            <TabsTrigger value="analyze">Analyze Data</TabsTrigger>
-            <TabsTrigger value="upload">Upload Dataset</TabsTrigger>
+          <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto mb-6 bg-gray-800 border border-blue-500/20">
+            <TabsTrigger value="analyze" className="data-[state=active]:bg-blue-900 data-[state=active]:text-blue-300">
+              <MonitorSmartphone className="h-4 w-4 mr-2" />
+              Analyze Data
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="data-[state=active]:bg-blue-900 data-[state=active]:text-blue-300">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Dataset
+            </TabsTrigger>
           </TabsList>
 
           {/* Analyze Data Tab */}
           <TabsContent value="analyze">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Dataset Selection */}
-              <Card className="lg:col-span-1">
+              <Card className="lg:col-span-1 bg-gray-800 border-blue-500/20">
                 <CardHeader>
-                  <CardTitle>Select Dataset</CardTitle>
-                  <CardDescription>Choose a dataset to analyze</CardDescription>
+                  <CardTitle className="text-blue-400">Select Dataset</CardTitle>
+                  <CardDescription className="text-gray-400">Choose a dataset to analyze</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex gap-2">
@@ -206,15 +226,15 @@ const AdvancedAnalysis = () => {
                       value={selectedDataset} 
                       onValueChange={handleDatasetChange}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-gray-900 border-blue-500/20 text-gray-300">
                         <SelectValue placeholder="Select a dataset" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-gray-800 border-blue-500/20">
                         {isLoadingDatasets ? (
                           <SelectItem value="loading" disabled>Loading datasets...</SelectItem>
                         ) : datasets && datasets.length > 0 ? (
                           datasets.map(dataset => (
-                            <SelectItem key={dataset.id} value={dataset.id}>
+                            <SelectItem key={dataset.id} value={dataset.id} className="text-gray-300">
                               {dataset.name}
                             </SelectItem>
                           ))
@@ -227,6 +247,7 @@ const AdvancedAnalysis = () => {
                       variant="outline" 
                       size="icon"
                       onClick={() => refetchDatasets()}
+                      className="border-blue-500/20 text-blue-400 hover:bg-blue-900/30"
                     >
                       <RefreshCw className="h-4 w-4" />
                     </Button>
@@ -234,25 +255,25 @@ const AdvancedAnalysis = () => {
 
                   {fetchDatasetInfo.isPending && (
                     <div className="flex items-center justify-center p-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
                     </div>
                   )}
 
                   {datasetInfo && (
                     <div className="space-y-3 mt-4">
                       <div>
-                        <h3 className="font-medium">Description</h3>
-                        <p className="text-sm text-muted-foreground">{datasetInfo.description}</p>
+                        <h3 className="font-medium text-blue-300">Description</h3>
+                        <p className="text-sm text-gray-400">{datasetInfo.description}</p>
                       </div>
                       <div>
-                        <h3 className="font-medium">Stats</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-medium text-blue-300">Stats</h3>
+                        <p className="text-sm text-gray-400">
                           {datasetInfo.rows.toLocaleString()} rows × {datasetInfo.columns_count} columns
                         </p>
                       </div>
                       <div>
-                        <h3 className="font-medium">Columns</h3>
-                        <div className="text-sm text-muted-foreground max-h-32 overflow-y-auto border rounded-md p-2 mt-1 bg-slate-50">
+                        <h3 className="font-medium text-blue-300">Columns</h3>
+                        <div className="text-sm text-gray-400 max-h-32 overflow-y-auto border rounded-md p-2 mt-1 bg-gray-900 border-blue-500/20">
                           {datasetInfo.columns.map((column, index) => (
                             <div key={index} className="py-0.5">{column}</div>
                           ))}
@@ -264,10 +285,10 @@ const AdvancedAnalysis = () => {
               </Card>
 
               {/* Query Input and Results */}
-              <Card className="lg:col-span-2">
+              <Card className="lg:col-span-2 bg-gray-800 border-blue-500/20">
                 <CardHeader>
-                  <CardTitle>Natural Language Query</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-blue-400">Natural Language Query</CardTitle>
+                  <CardDescription className="text-gray-400">
                     Describe what visualization you want to generate
                   </CardDescription>
                 </CardHeader>
@@ -281,11 +302,11 @@ const AdvancedAnalysis = () => {
                       }
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      className="min-h-[100px]"
+                      className="min-h-[100px] bg-gray-900 border-blue-500/20 text-gray-300 placeholder:text-gray-500"
                       disabled={!selectedDataset}
                     />
                     <Button 
-                      className="w-full"
+                      className="w-full bg-blue-600 hover:bg-blue-700"
                       disabled={!selectedDataset || !query || analyzeData.isPending}
                       onClick={() => analyzeData.mutate()}
                     >
@@ -299,31 +320,40 @@ const AdvancedAnalysis = () => {
                   </div>
 
                   {/* Results Section */}
-                  {(resultCode || resultImage) && (
+                  {resultData && (
                     <div className="space-y-4 mt-4">
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <h3 className="font-medium">Generated Code</h3>
-                          <CodeDisplay code={resultCode} />
-                        </div>
+                      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                        <TabsList className="w-full bg-gray-900 border border-blue-500/20">
+                          <TabsTrigger value="visualization" className="flex-1 data-[state=active]:bg-blue-900 data-[state=active]:text-blue-300">
+                            <BarChart3 className="h-4 w-4 mr-2" />
+                            Visualization
+                          </TabsTrigger>
+                          <TabsTrigger value="code" className="flex-1 data-[state=active]:bg-blue-900 data-[state=active]:text-blue-300">
+                            <Code className="h-4 w-4 mr-2" />
+                            Code
+                          </TabsTrigger>
+                          <TabsTrigger value="explanation" className="flex-1 data-[state=active]:bg-blue-900 data-[state=active]:text-blue-300">
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            Explanation
+                          </TabsTrigger>
+                        </TabsList>
                         
-                        <div className="space-y-2">
-                          <h3 className="font-medium">Visualization</h3>
-                          <div className="border rounded-md overflow-hidden bg-white p-2">
-                            {resultImage ? (
-                              <img 
-                                src={resultImage} 
-                                alt="Generated visualization" 
-                                className="w-full h-auto"
-                              />
-                            ) : (
-                              <div className="w-full h-64 flex items-center justify-center bg-slate-100 text-slate-400">
-                                No visualization generated yet
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                        <TabsContent value="visualization" className="mt-4">
+                          <VisualizationDisplay 
+                            imageUrl={resultData.image} 
+                            isLoading={false}
+                            query={query}
+                          />
+                        </TabsContent>
+                        
+                        <TabsContent value="code" className="mt-4">
+                          <CodeDisplay code={resultData.code} />
+                        </TabsContent>
+
+                        <TabsContent value="explanation" className="mt-4">
+                          <ExplanationDisplay explanation={resultData.explanation || ""} />
+                        </TabsContent>
+                      </Tabs>
                     </div>
                   )}
                 </CardContent>
@@ -333,29 +363,30 @@ const AdvancedAnalysis = () => {
 
           {/* Upload Dataset Tab */}
           <TabsContent value="upload">
-            <Card className="max-w-xl mx-auto">
+            <Card className="max-w-xl mx-auto bg-gray-800 border-blue-500/20">
               <CardHeader>
-                <CardTitle>Upload Custom Dataset</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-blue-400">Upload Custom Dataset</CardTitle>
+                <CardDescription className="text-gray-400">
                   Upload a CSV file to analyze with our tools (max 10MB)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid w-full items-center gap-2">
-                  <Label htmlFor="file">Select CSV File</Label>
+                  <Label htmlFor="file" className="text-gray-300">Select CSV File</Label>
                   <Input 
                     id="file" 
                     type="file"
                     accept=".csv"
-                    onChange={handleFileChange} 
+                    onChange={handleFileChange}
+                    className="bg-gray-900 border-blue-500/20 text-gray-300"
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-400">
                     File should be in CSV format with headers in the first row
                   </p>
                 </div>
                 
                 <Button 
-                  className="w-full"
+                  className="w-full bg-blue-600 hover:bg-blue-700"
                   disabled={!file || uploadDataset.isPending}
                   onClick={() => uploadDataset.mutate()}
                 >
@@ -377,8 +408,8 @@ const AdvancedAnalysis = () => {
         </Tabs>
       </main>
 
-      <footer className="border-t mt-12">
-        <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
+      <footer className="border-t border-blue-500/20 mt-12">
+        <div className="container mx-auto px-4 py-6 text-center text-sm text-gray-400">
           <p>Automated Data Analysis Agent - Powered by AI</p>
           <p className="text-xs mt-1">
             Backend processing requires running the Python Flask server

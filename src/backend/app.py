@@ -54,7 +54,7 @@ def get_dataset_info(dataset_id):
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_data():
-    """Process a natural language query and return code and visualization"""
+    """Process a natural language query and return code, visualization, and explanation"""
     try:
         data = request.json
         if not data or 'query' not in data or 'dataset' not in data:
@@ -68,12 +68,12 @@ def analyze_data():
         if df is None:
             return jsonify({"error": f"Dataset '{dataset_id}' not found"}), 404
         
-        # Generate prompt
+        # Generate prompt for code
         columns = list(df.columns)
-        prompt = prompt_engineer.zero_shot_prompt(query, columns)
+        code_prompt = prompt_engineer.zero_shot_prompt(query, columns)
         
         # Generate code from LLM
-        generated_code = llm_client.generate_code(prompt)
+        generated_code = llm_client.generate_code(code_prompt)
         if not generated_code:
             return jsonify({"error": "Failed to generate code"}), 500
         
@@ -83,6 +83,10 @@ def analyze_data():
         # Check if result is an error message
         if isinstance(result, str) and result.startswith("Error:"):
             return jsonify({"error": result, "code": generated_code}), 400
+        
+        # Generate explanation for the visualization
+        explanation_prompt = f"Explain this data visualization in plain English. The query was: '{query}'. The code is: {generated_code}"
+        explanation = llm_client.generate_explanation(explanation_prompt)
         
         # Convert plot to base64 image
         img_data = io.BytesIO()
@@ -94,6 +98,7 @@ def analyze_data():
         return jsonify({
             "code": generated_code,
             "image": encoded_img,
+            "explanation": explanation,
             "success": True
         })
         

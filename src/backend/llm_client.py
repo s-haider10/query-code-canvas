@@ -41,6 +41,31 @@ class LLMClient:
             logger.error(f"Error generating code with OpenAI API: {str(e)}")
             return None
     
+    def generate_explanation(self, prompt: str) -> str:
+        """Generate an explanation for a visualization"""
+        if not self.api_key:
+            logger.warning("Cannot generate explanation: OpenAI API key not set")
+            return "No explanation available (API key not configured)."
+            
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a data visualization expert. Explain visualizations in a clear, concise way that highlights the key insights."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,  # Higher temperature for more creative explanations
+                max_tokens=500
+            )
+            
+            # Extract explanation
+            explanation = response.choices[0].message.content
+            return explanation
+            
+        except Exception as e:
+            logger.error(f"Error generating explanation with OpenAI API: {str(e)}")
+            return f"Could not generate explanation: {str(e)}"
+    
     def _extract_code(self, text: str) -> str:
         """Extract code blocks from the response text"""
         # Look for code blocks surrounded by triple backticks
@@ -101,4 +126,43 @@ plt.title('Data Visualization')
 plt.xlabel(df.columns[0])
 plt.ylabel(df.columns[1])
 plt.grid(True, alpha=0.3)
+"""
+
+    def mock_generate_explanation(self, prompt: str) -> str:
+        """Mock implementation for explanation generation"""
+        logger.info(f"Using mock explanation generator with prompt: {prompt[:50]}...")
+        
+        if "histogram" in prompt.lower() and "age" in prompt.lower():
+            return """
+This histogram shows the distribution of passenger ages on the Titanic. The x-axis represents age ranges, while the y-axis shows the count of passengers within each age range.
+
+Key observations:
+1. Most passengers were young to middle-aged adults (20-40 years old).
+2. There's a noticeable group of children under 10 years old.
+3. The red dashed line indicates the mean age of passengers.
+4. There were very few elderly passengers (over 70 years old).
+
+This visualization helps understand the demographic makeup of the Titanic's passengers and could be useful for analyzing survival rates across different age groups.
+"""
+        elif "survival" in prompt.lower() and "gender" in prompt.lower():
+            return """
+This bar chart illustrates the stark difference in survival rates between genders on the Titanic. 
+
+Key insights:
+1. Female passengers had a significantly higher survival rate (approximately 74%) compared to male passengers (about 19%).
+2. This disparity reflects the "women and children first" protocol followed during the evacuation.
+3. The nearly four-fold difference in survival probability based solely on gender was one of the most decisive factors determining one's chance of survival.
+
+This visualization confirms the historical accounts that priority was given to female passengers when lifeboats were being loaded.
+"""
+        else:
+            return """
+This visualization displays the relationship between two variables in the dataset. The points represent individual data points, while the line shows the overall trend.
+
+Some observations:
+1. There appears to be a correlation between the two variables.
+2. The data points show some scatter around the trend line, indicating variability.
+3. This visualization helps identify patterns that might not be apparent from looking at raw numbers.
+
+Further analysis would be needed to determine statistical significance and causality between these variables.
 """

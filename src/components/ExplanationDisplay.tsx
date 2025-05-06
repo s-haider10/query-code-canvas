@@ -8,16 +8,16 @@ interface ExplanationDisplayProps {
 
 const ExplanationDisplay = ({ explanation }: ExplanationDisplayProps) => {
   return (
-    <Card className="h-full bg-gray-800 border-blue-500/20">
+    <Card className="h-full bg-gray-800 border-[#10A37F]/20">
       <CardHeader>
-        <CardTitle className="text-md font-medium text-blue-400">Explanation</CardTitle>
+        <CardTitle className="text-md font-medium text-[#10A37F]">Explanation</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="max-h-[400px]">
           <div className="prose prose-invert max-w-none">
             {explanation.split('\n').map((paragraph, index) => (
               paragraph.trim() ? (
-                <p key={index} className="mb-4 text-gray-300">{paragraph}</p>
+                <p key={index} className="mb-4 text-[#ECECF1]">{paragraph}</p>
               ) : null
             ))}
           </div>

@@ -5,7 +5,10 @@ import DatasetSelector from '@/components/DatasetSelector';
 import QueryInput from '@/components/QueryInput';
 import CodeDisplay from '@/components/CodeDisplay';
 import VisualizationDisplay from '@/components/VisualizationDisplay';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { Rocket } from 'lucide-react';
 
 const Index = () => {
   const [selectedDataset, setSelectedDataset] = useState<DatasetType>('titanic');
@@ -53,9 +56,17 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-primary">Automated Data Analysis Agent</h1>
-          <p className="text-muted-foreground">Generate data visualizations using natural language queries</p>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-primary">Automated Data Analysis Agent</h1>
+            <p className="text-muted-foreground">Generate data visualizations using natural language queries</p>
+          </div>
+          <Link to="/advanced">
+            <Button className="flex items-center gap-2">
+              <Rocket className="h-4 w-4" />
+              Advanced Analysis
+            </Button>
+          </Link>
         </div>
       </header>
       

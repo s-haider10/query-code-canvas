@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Download, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface VisualizationDisplayProps {
   imageUrl: string;
@@ -44,26 +44,26 @@ const VisualizationDisplay = ({ imageUrl, isLoading, query }: VisualizationDispl
   };
 
   return (
-    <Card className="h-full bg-gray-800 border-blue-500/20">
+    <Card className="h-full bg-[#2A2B36] border-[#10A37F]/20">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-md font-medium text-blue-400">Visualization</CardTitle>
+        <CardTitle className="text-md font-medium text-[#10A37F]">Visualization</CardTitle>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={handleDownload}
           disabled={isLoading || !imageUrl}
-          className="h-8 border-blue-500/20 text-blue-400 hover:bg-blue-900/30"
+          className="h-8 border-[#10A37F]/20 text-[#10A37F] hover:bg-[#10A37F]/10"
         >
           <Download className="h-4 w-4 mr-1" />
           Download
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="bg-gray-900 rounded-md overflow-hidden relative min-h-[300px] flex items-center justify-center border border-blue-500/20">
+        <div className="bg-[#343541] rounded-md overflow-hidden relative min-h-[300px] flex items-center justify-center border border-[#10A37F]/20">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-8 gap-3">
-              <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
-              <p className="text-sm text-blue-400 animate-pulse">Generating visualization...</p>
+              <Loader2 className="h-10 w-10 text-[#10A37F] animate-spin" />
+              <p className="text-sm text-[#10A37F] animate-pulse">Generating visualization...</p>
             </div>
           ) : imageUrl ? (
             <img 
@@ -87,7 +87,7 @@ const VisualizationDisplay = ({ imageUrl, isLoading, query }: VisualizationDispl
               variant={liked === true ? "default" : "outline"}
               size="sm"
               onClick={() => handleFeedback(true)}
-              className={`h-8 ${liked === true ? 'bg-green-600 hover:bg-green-700' : 'border-blue-500/20 text-blue-400 hover:bg-blue-900/30'}`}
+              className={`h-8 ${liked === true ? 'bg-[#10A37F] hover:bg-[#0D8A69]' : 'border-[#10A37F]/20 text-[#10A37F] hover:bg-[#10A37F]/10'}`}
             >
               <ThumbsUp className="h-4 w-4 mr-1" />
               Yes
@@ -96,7 +96,7 @@ const VisualizationDisplay = ({ imageUrl, isLoading, query }: VisualizationDispl
               variant={liked === false ? "default" : "outline"}
               size="sm"
               onClick={() => handleFeedback(false)}
-              className={`h-8 ${liked === false ? 'bg-amber-600 hover:bg-amber-700' : 'border-blue-500/20 text-blue-400 hover:bg-blue-900/30'}`}
+              className={`h-8 ${liked === false ? 'bg-amber-600 hover:bg-amber-700' : 'border-[#10A37F]/20 text-[#10A37F] hover:bg-[#10A37F]/10'}`}
             >
               <ThumbsDown className="h-4 w-4 mr-1" />
               No

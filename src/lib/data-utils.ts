@@ -1,4 +1,3 @@
-
 // Types for our datasets
 export type DatasetType = 'titanic' | 'iris' | 'gapminder';
 
@@ -69,27 +68,21 @@ export const datasets: Record<DatasetType, DatasetInfo> = {
 };
 
 // Sample predefined queries for each dataset
-export const sampleQueries: Record<DatasetType, string[]> = {
-  titanic: [
-    'Plot survival rate by passenger class',
-    'Create a histogram of passenger ages',
-    'Show survival rate by gender',
-    'Create a scatter plot of age vs fare',
-    'Plot passenger count by embarkation point'
+export const sampleQueries: Record<string, string[]> = {
+  "Titanic Passenger Data": [
+    "Plot survival rate by passenger class",
+    "Create a histogram of passenger ages",
+    "Show correlation between fare and survival"
   ],
-  iris: [
-    'Plot sepal length vs sepal width colored by species',
-    'Create a histogram of petal length',
-    'Show box plots of petal dimensions by species',
-    'Create pair plots of all features',
-    'Calculate mean measurements by species'
+  "Iris Flower Dataset": [
+    "Plot sepal length vs sepal width colored by species",
+    "Create a histogram of petal lengths",
+    "Show a boxplot of measurements by species"
   ],
-  gapminder: [
-    'Plot life expectancy vs GDP per capita for 2007',
-    'Show population growth over time for top 5 countries',
-    'Create a bar chart of life expectancy by continent',
-    'Plot GDP per capita trends over time by continent',
-    'Create a bubble chart of population vs GDP with life expectancy as size'
+  "Titanic_Dataset": [
+    "Show survival rate by gender", 
+    "Create a histogram of passenger ages",
+    "Plot survival rate by class"
   ]
 };
 

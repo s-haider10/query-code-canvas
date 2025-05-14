@@ -93,45 +93,29 @@ export const uploadDataset = async (
 
 // Query API functions
 export const executeQuery = async (datasetId: string, queryText: string) => {
-  // Call the AI code generation endpoint
-  const response = await fetch(`/api/analyze`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ 
-      dataset: datasetId,
-      query: queryText 
-    }),
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to execute query');
+  try {
+    // Call the Supabase Edge Function for analysis
+    const { data, error } = await supabase.functions.invoke('analyze', {
+      body: JSON.stringify({
+        dataset: datasetId,
+        query: queryText
+      }),
+    });
+    
+    if (error) {
+      console.error('Error calling analyze function:', error);
+      throw new Error(error.message || 'Failed to execute query');
+    }
+    
+    if (!data) {
+      throw new Error('No data returned from analyze function');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error in executeQuery:', error);
+    throw error;
   }
-  
-  const result = await response.json();
-  
-  // Store query results in database
-  const user = supabase.auth.getUser();
-  const userId = (await user).data.user?.id;
-  
-  if (userId) {
-    await supabase.from('queries').insert([
-      {
-        dataset_id: datasetId,
-        user_id: userId,
-        query_text: queryText,
-        generated_code: result.code,
-        visualization_url: result.image ? `data:image/png;base64,${result.image}` : null,
-        explanation: result.explanation,
-        execution_time: result.executionTime || 0,
-        success: result.success
-      }
-    ]);
-  }
-  
-  return result;
 };
 
 // Function to create or get default datasets

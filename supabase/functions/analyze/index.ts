@@ -61,11 +61,49 @@ serve(async (req) => {
       columns = [];
     }
 
-    // Create prompt for code generation
-    const systemPrompt = `You are a data science assistant that generates Python visualization code.
-    The data is in a pandas DataFrame named 'df' with columns: ${columns.join(', ')}.
-    Generate high-quality Python code using pandas and matplotlib/seaborn to answer the query.
-    Focus only on the visualization code, with no explanations or comments.`;
+    // Get the dataset content
+    const dataContent = datasetData.full_content || '';
+    if (!dataContent) {
+      throw new Error('Dataset content not available');
+    }
+
+    // Extract data types by analyzing the sample data
+    const sample = datasetData.sample ? JSON.parse(datasetData.sample) : [];
+    const dataTypes: Record<string, string> = {};
+    
+    if (sample.length > 0) {
+      const firstRow = sample[0];
+      for (const key in firstRow) {
+        const value = firstRow[key];
+        dataTypes[key] = typeof value;
+      }
+    }
+
+    // Create prompt for data analysis similar to the notebook version
+    const systemPrompt = `
+    You are a data analysis assistant working with a pandas DataFrame.
+    Dataframe columns: ${columns.join(', ')}
+    Data types: ${JSON.stringify(dataTypes)}
+    
+    The user asks: ${query}
+    
+    Generate Python code to:
+    1. Perform the requested analysis
+    2. Create appropriate visualization using matplotlib/seaborn
+    3. Return insights about the data
+    
+    IMPORTANT:
+    - Use ONLY these variables: df, plt, sns
+    - Never use unsafe functions like eval() or os
+    - Use seaborn or matplotlib for plots
+    - Make sure the code is complete and ready to run
+    - Include all necessary imports
+    - Save the plot to a variable called 'fig'
+    
+    Provide your response in this format:
+    Analysis: [Brief analysis summary]
+    Code: [Python code only, without backticks]
+    `;
 
     // Generate code with OpenAI
     const codeResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -91,17 +129,37 @@ serve(async (req) => {
     }
 
     const codeData = await codeResponse.json();
-    const generatedCode = codeData.choices[0].message.content;
+    const fullResponse = codeData.choices[0].message.content;
+
+    // Extract components from the response
+    let analysis = "";
+    let generatedCode = "";
+    
+    if (fullResponse.includes("Analysis:") && fullResponse.includes("Code:")) {
+      analysis = fullResponse.split("Analysis:")[1].split("Code:")[0].trim();
+      generatedCode = fullResponse.split("Code:")[1].trim();
+    } else {
+      // If the format isn't as expected, use the whole response as code
+      generatedCode = fullResponse;
+    }
 
     // Generate explanation with a second API call
-    const explanationPrompt = `Explain this data visualization in simple terms:
+    const explanationPrompt = `
+    I analyzed a dataset with these columns: ${columns.join(', ')}
     
-    Query: "${query}"
+    The user asked: "${query}"
     
-    Code:
+    I generated this code:
     ${generatedCode}
     
-    Explain what insights can be drawn from this visualization in 3-4 sentences.`;
+    Please provide a detailed explanation of:
+    1. What the code does
+    2. What insights can be derived from this analysis
+    3. Any interesting patterns or findings
+    4. Recommendations for further analysis
+    
+    Explanation should be understandable to non-technical users but still informative.
+    `;
 
     const explanationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -185,6 +243,7 @@ serve(async (req) => {
       JSON.stringify({
         code: generatedCode,
         explanation: explanation,
+        analysis: analysis,
         image: imageUrl,
         success: true
       }),

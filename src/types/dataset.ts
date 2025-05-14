@@ -9,6 +9,7 @@ export interface Dataset {
   predefined: boolean;
   sample?: any[];
   file_type?: string;
+  full_content?: string; // Added to store the full dataset content
 }
 
 // Change DatasetType to be compatible with string values
@@ -26,4 +27,5 @@ export interface DatasetMetadata {
   created_at: string;
   predefined?: boolean;
   sample?: any[] | string;
+  full_content?: string; // Added to store the full dataset content
 }

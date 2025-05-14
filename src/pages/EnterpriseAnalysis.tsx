@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,6 +21,7 @@ const EnterpriseAnalysis = () => {
   const [code, setCode] = useState<string>('');
   const [visualizationUrl, setVisualizationUrl] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
+  const [analysis, setAnalysis] = useState<string>('');
   
   const { toast } = useToast();
 
@@ -50,8 +52,9 @@ const EnterpriseAnalysis = () => {
       executeQuery(datasetId, queryText),
     onSuccess: (data) => {
       setCode(data.code || '');
-      setVisualizationUrl(data.image ? `data:image/png;base64,${data.image}` : '');
+      setVisualizationUrl(data.image ? `data:image/png;base64,${data.image}` : data.image);
       setExplanation(data.explanation || '');
+      setAnalysis(data.analysis || '');
       toast({ description: "Query executed successfully" });
     },
     onError: (error: Error) => {
@@ -69,6 +72,7 @@ const EnterpriseAnalysis = () => {
     setCode('');
     setVisualizationUrl('');
     setExplanation('');
+    setAnalysis('');
     setQuery('');
   };
 
@@ -175,6 +179,7 @@ const EnterpriseAnalysis = () => {
                       
                       <ExplanationDisplay
                         explanation={explanation}
+                        analysis={analysis}
                         isLoading={isQueryRunning}
                       />
                     </div>

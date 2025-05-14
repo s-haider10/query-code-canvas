@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 
 interface QueryInputProps {
-  dataset: string; // Changed from DatasetType to string
+  dataset: string;
   onSubmitQuery: (query: string) => void;
   isLoading: boolean;
 }
@@ -23,7 +23,13 @@ const QueryInput = ({ dataset, onSubmitQuery, isLoading }: QueryInputProps) => {
   };
   
   // Make sure we have example queries for the given dataset
-  const exampleQueries = sampleQueries[dataset as keyof typeof sampleQueries] || [];
+  const exampleQueries = sampleQueries[dataset as keyof typeof sampleQueries] || [
+    "Give me a summary of this dataset",
+    "Show a histogram of numeric columns",
+    "What are the correlations between numerical variables?",
+    "Create a scatter plot comparing two important variables",
+    "Show the distribution of categorical variables"
+  ];
   
   return (
     <div className="space-y-4">

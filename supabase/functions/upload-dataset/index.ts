@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
     let columns: string[] = [];
     let rows = 0;
     let sample: Record<string, any>[] = [];
+    let fullContent = fileContent; // Store the full content
     
     if (fileExt === 'csv') {
       columns = await extractColumnsFromCSV(fileContent);
@@ -145,7 +146,8 @@ Deno.serve(async (req) => {
           columns_count: columns.length,
           rows,
           user_id: user.id,
-          sample: JSON.stringify(sample)
+          sample: JSON.stringify(sample),
+          full_content: fileContent // Store the full dataset content
         }
       ])
       .select()

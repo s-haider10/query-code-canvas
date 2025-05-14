@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -112,7 +111,7 @@ const EnterpriseAnalysis = () => {
   }
 
   const currentDataset = datasets?.find(d => d.id === selectedDataset);
-  // Fix the type issue here - use currentDataset.name directly without casting to DatasetType
+  // Since DatasetType is now defined as string, this assignment is valid
   const datasetName = currentDataset ? currentDataset.name : '';
 
   return (

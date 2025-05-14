@@ -11,7 +11,7 @@ export interface Dataset {
   file_type?: string;
 }
 
-// Add DatasetType as a string type
+// Change DatasetType to be compatible with string values
 export type DatasetType = string;
 
 // Make sure our interface is compatible with what's coming from API

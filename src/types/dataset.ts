@@ -8,4 +8,22 @@ export interface Dataset {
   columns_count: number;
   predefined: boolean;
   sample?: any[];
+  file_type?: string;
+}
+
+// Add DatasetType as a string type
+export type DatasetType = string;
+
+// Make sure our interface is compatible with what's coming from API
+export interface DatasetMetadata {
+  id: string;
+  name: string;
+  description: string | null;
+  columns: string[] | string;
+  rows: number | null;
+  columns_count: number | null;
+  file_type: string;
+  created_at: string;
+  predefined?: boolean;
+  sample?: any[] | string;
 }

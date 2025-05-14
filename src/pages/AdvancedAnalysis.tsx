@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -351,7 +350,7 @@ const AdvancedAnalysis = () => {
                         </TabsContent>
 
                         <TabsContent value="explanation" className="mt-4">
-                          <ExplanationDisplay explanation={resultData.explanation || ""} />
+                          <ExplanationDisplay explanation={resultData.explanation || ""} isLoading={false} />
                         </TabsContent>
                       </Tabs>
                     </div>

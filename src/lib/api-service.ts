@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { DatasetType } from '@/types/dataset';
+import { DatasetType, DatasetMetadata } from '@/types/dataset';
 
 export interface DatasetMetadata {
   id: string;

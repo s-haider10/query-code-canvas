@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Code, BarChart3 } from 'lucide-react';
-import { fetchDatasets, executeQuery, DatasetMetadata, ensureDefaultDatasets } from '@/lib/api-service';
+import { fetchDatasets, executeQuery, ensureDefaultDatasets } from '@/lib/api-service';
 import DatasetSelector from '@/components/DatasetSelector';
 import QueryInput from '@/components/QueryInput';
 import CodeDisplay from '@/components/CodeDisplay';

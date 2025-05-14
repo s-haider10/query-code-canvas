@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Rocket } from 'lucide-react';
+import { fetchDatasets } from '@/lib/api-service';
+import { useQuery } from '@tanstack/react-query';
 
 const Index = () => {
   const [selectedDataset, setSelectedDataset] = useState<DatasetType>('titanic');
@@ -17,6 +19,12 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [visualizationUrl, setVisualizationUrl] = useState<string>('');
   const { toast } = useToast();
+  
+  // Fetch datasets
+  const { data: datasets = [] } = useQuery({
+    queryKey: ['datasets'],
+    queryFn: fetchDatasets,
+  });
 
   const handleDatasetChange = (dataset: DatasetType) => {
     setSelectedDataset(dataset);
@@ -75,6 +83,7 @@ const Index = () => {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <DatasetSelector 
+              datasets={datasets}
               selectedDataset={selectedDataset} 
               onSelectDataset={handleDatasetChange} 
             />

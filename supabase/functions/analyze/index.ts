@@ -26,17 +26,31 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     const { dataset: datasetId, query } = await req.json();
+    
+    console.log(`Processing query for dataset: ${datasetId}`);
+    
+    if (!datasetId) {
+      throw new Error('Dataset ID is required');
+    }
 
     // Get dataset information
-    const { data: datasetData, error: datasetError } = await supabase
+    const { data: datasets, error: datasetsError } = await supabase
       .from('datasets')
       .select('*')
-      .eq('id', datasetId)
-      .single();
-
-    if (datasetError || !datasetData) {
-      throw new Error(`Dataset not found: ${datasetError?.message || 'Unknown error'}`);
+      .eq('id', datasetId);
+      
+    if (datasetsError) {
+      console.error("Error fetching dataset:", datasetsError);
+      throw new Error(`Dataset fetch error: ${datasetsError.message}`);
     }
+    
+    if (!datasets || datasets.length === 0) {
+      console.error(`No dataset found with id: ${datasetId}`);
+      throw new Error('Dataset not found');
+    }
+    
+    const datasetData = datasets[0];
+    console.log(`Found dataset: ${datasetData.name}`);
 
     // Parse columns from the dataset
     let columns = [];
@@ -144,19 +158,27 @@ serve(async (req) => {
       imageUrl = '/default-chart.png';
     }
 
-    // Convert the relative URL to a data URL by fetching the image
-    // Note: In a real implementation with a backend, you would generate this image from the code
     // Store query in database
-    await supabase.from('queries').insert([
-      {
-        dataset_id: datasetId,
-        query_text: query,
-        generated_code: generatedCode,
-        explanation: explanation,
-        execution_time: 0.5, // Mock execution time
-        success: true
+    try {
+      const { error: insertError } = await supabase.from('queries').insert([
+        {
+          dataset_id: datasetId,
+          query_text: query,
+          generated_code: generatedCode,
+          explanation: explanation,
+          execution_time: 0.5, // Mock execution time
+          success: true
+        }
+      ]);
+      
+      if (insertError) {
+        console.error("Error storing query in database:", insertError);
+        // Continue execution even if storing query fails
       }
-    ]);
+    } catch (e) {
+      console.error("Exception storing query:", e);
+      // Continue execution even if storing query fails
+    }
 
     // Return the response
     return new Response(

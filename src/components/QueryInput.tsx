@@ -22,6 +22,9 @@ const QueryInput = ({ dataset, onSubmitQuery, isLoading }: QueryInputProps) => {
     }
   };
   
+  // Make sure we have example queries for the given dataset
+  const exampleQueries = sampleQueries[dataset as keyof typeof sampleQueries] || [];
+  
   return (
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="flex gap-2">
@@ -43,7 +46,7 @@ const QueryInput = ({ dataset, onSubmitQuery, isLoading }: QueryInputProps) => {
       <div>
         <h4 className="text-sm font-medium mb-2">Example queries:</h4>
         <div className="flex flex-wrap gap-2">
-          {sampleQueries[dataset].map((example, index) => (
+          {exampleQueries.map((example, index) => (
             <Badge 
               key={index} 
               variant="outline" 

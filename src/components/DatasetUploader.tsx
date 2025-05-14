@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { handleDatasetUpload } from '@/pages/api/upload-dataset';
 
 interface DatasetUploaderProps {
   onUploadComplete: () => void;
@@ -64,12 +64,6 @@ const DatasetUploader = ({ onUploadComplete }: DatasetUploaderProps) => {
     setProgress(10); // Start progress
     
     try {
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('name', name);
-      formData.append('description', description);
-      
       // Get session for authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -87,32 +81,15 @@ const DatasetUploader = ({ onUploadComplete }: DatasetUploaderProps) => {
         });
       }, 500);
       
-      // Upload to the Supabase edge function
-      const response = await fetch('/api/upload-dataset', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: formData,
-      });
+      // Use our direct upload function instead of the Next.js API route
+      const result = await handleDatasetUpload(
+        file,
+        name,
+        description,
+        session.access_token
+      );
       
       clearInterval(progressInterval);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage;
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || 'Failed to upload dataset';
-        } catch (e) {
-          // If parsing fails, use the raw text
-          errorMessage = errorText || 'Failed to upload dataset';
-        }
-        throw new Error(errorMessage);
-      }
-      
-      const result = await response.json();
-      
       setProgress(100);
       
       // Reset form and close dialog

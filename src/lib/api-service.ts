@@ -1,17 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { DatasetType, DatasetMetadata } from '@/types/dataset';
+import { DatasetType, DatasetMetadata as DatasetMetadataType } from '@/types/dataset';
 
-export interface DatasetMetadata {
-  id: string;
-  name: string;
-  description: string;
-  columns: string[];
-  rows: number;
-  columns_count: number;
-  file_type: string;
-  created_at: string;
-}
-
+// Remove the duplicate interface declaration and use the imported type
 export interface QueryResult {
   id: string;
   query_text: string;
@@ -30,7 +21,7 @@ export const fetchDatasets = async () => {
     .order('created_at', { ascending: false });
   
   if (error) throw error;
-  return data as DatasetMetadata[];
+  return data as DatasetMetadataType[];
 };
 
 export const fetchDataset = async (id: string) => {
@@ -41,7 +32,7 @@ export const fetchDataset = async (id: string) => {
     .maybeSingle();
   
   if (error) throw error;
-  return data as DatasetMetadata | null;
+  return data as DatasetMetadataType | null;
 };
 
 export const uploadDataset = async (

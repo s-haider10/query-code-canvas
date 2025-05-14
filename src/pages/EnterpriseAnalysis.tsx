@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -111,6 +112,8 @@ const EnterpriseAnalysis = () => {
   }
 
   const currentDataset = datasets?.find(d => d.id === selectedDataset);
+  // Fix the type issue here - use currentDataset.name directly without casting to DatasetType
+  const datasetName = currentDataset ? currentDataset.name : '';
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -137,7 +140,7 @@ const EnterpriseAnalysis = () => {
           <div className="bg-white p-4 rounded-lg shadow-sm border">
             <h2 className="text-xl font-semibold mb-4">Query Input</h2>
             <QueryInput
-              dataset={currentDataset ? (currentDataset.name as DatasetType) : 'titanic'}
+              dataset={datasetName}
               onSubmitQuery={handleQuerySubmit}
               isLoading={isQueryRunning}
             />

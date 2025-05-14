@@ -11,7 +11,7 @@ import CodeDisplay from '@/components/CodeDisplay';
 import VisualizationDisplay from '@/components/VisualizationDisplay';
 import ExplanationDisplay from '@/components/ExplanationDisplay';
 import DatasetUploader from '@/components/DatasetUploader';
-import { DatasetType } from '@/types/dataset';
+import { Dataset } from '@/types/dataset';
 
 const EnterpriseAnalysis = () => {
   const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
@@ -111,7 +111,7 @@ const EnterpriseAnalysis = () => {
   }
 
   const currentDataset = datasets?.find(d => d.id === selectedDataset);
-  // Since DatasetType is now defined as string, this assignment is valid
+  // Use a simple string for the dataset name to avoid type conflicts
   const datasetName = currentDataset ? currentDataset.name : '';
 
   return (

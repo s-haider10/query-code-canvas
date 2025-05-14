@@ -26,7 +26,7 @@ class LLMClient:
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a data science assistant that generates Python code for data analysis and visualization. Only respond with code, no explanations."},
+                    {"role": "system", "content": "You are a data science assistant that generates Python code for data analysis and visualization. Only respond with code, no explanations or comments."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.2,  # Lower temperature for more deterministic outputs
@@ -52,7 +52,7 @@ class LLMClient:
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are a data visualization expert. Explain visualizations in a clear, concise way that highlights the key insights."},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": f"Generate executable Python code using pandas/matplotlib to: {prompt}. Dataset: {{dataset_name}} (Columns: {{columns}}). Return ONLY valid code with no explanations or comments."}
                 ],
                 temperature=0.7,  # Higher temperature for more creative explanations
                 max_tokens=500

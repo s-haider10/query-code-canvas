@@ -1,185 +1,202 @@
 
 import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import ChatPanel from '@/components/ChatPanel';
+import { Loader2, Code, BarChart3 } from 'lucide-react';
+import { fetchDatasets, executeQuery, DatasetMetadata, ensureDefaultDatasets } from '@/lib/api-service';
+import DatasetSelector from '@/components/DatasetSelector';
+import QueryInput from '@/components/QueryInput';
 import CodeDisplay from '@/components/CodeDisplay';
 import VisualizationDisplay from '@/components/VisualizationDisplay';
 import ExplanationDisplay from '@/components/ExplanationDisplay';
 import DatasetUploader from '@/components/DatasetUploader';
-import { Dataset } from '@/types/dataset';
+import { DatasetType } from '@/types/dataset';
 
 const EnterpriseAnalysis = () => {
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
-  const [generatedCode, setGeneratedCode] = useState<string>('');
-  const [imageUrl, setImageUrl] = useState<string>('');
+  const [query, setQuery] = useState<string>('');
+  const [code, setCode] = useState<string>('');
+  const [visualizationUrl, setVisualizationUrl] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [currentQuery, setCurrentQuery] = useState<string>('');
-  const { toast } = useToast();
   
-  // Load datasets on component mount
-  useEffect(() => {
-    fetchDatasets();
-  }, []);
+  const { toast } = useToast();
 
-  const fetchDatasets = async () => {
-    try {
-      const response = await fetch('/api/datasets');
-      if (!response.ok) throw new Error('Failed to fetch datasets');
-      
-      const data = await response.json();
-      setDatasets(data.datasets || []);
-      
-      // Select first dataset by default if available
-      if (data.datasets && data.datasets.length > 0) {
-        setSelectedDataset(data.datasets[0].id);
-      }
-    } catch (error) {
-      console.error('Error fetching datasets:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load datasets. Please try again.",
+  // Fetch datasets
+  const { data: datasets, isLoading: datasetsLoading, error: datasetsError, refetch: refetchDatasets } = 
+    useQuery({
+      queryKey: ['datasets'],
+      queryFn: fetchDatasets,
+    });
+
+  // Ensure default datasets are available
+  useEffect(() => {
+    ensureDefaultDatasets()
+      .then(() => refetchDatasets())
+      .catch(error => console.error("Failed to ensure default datasets:", error));
+  }, [refetchDatasets]);
+
+  // Set first dataset as default when data loads
+  useEffect(() => {
+    if (datasets && datasets.length > 0 && !selectedDataset) {
+      setSelectedDataset(datasets[0].id);
+    }
+  }, [datasets, selectedDataset]);
+
+  // Run query mutation
+  const { mutate: runQuery, isPending: isQueryRunning } = useMutation({
+    mutationFn: ({ datasetId, queryText }: { datasetId: string, queryText: string }) => 
+      executeQuery(datasetId, queryText),
+    onSuccess: (data) => {
+      setCode(data.code || '');
+      setVisualizationUrl(data.image ? `data:image/png;base64,${data.image}` : '');
+      setExplanation(data.explanation || '');
+      toast({ description: "Query executed successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        variant: "destructive", 
+        title: "Error running query", 
+        description: error.message || "An error occurred during query execution"
       });
     }
+  });
+
+  const handleDatasetChange = (datasetId: string) => {
+    setSelectedDataset(datasetId);
+    // Reset previous results
+    setCode('');
+    setVisualizationUrl('');
+    setExplanation('');
+    setQuery('');
   };
 
-  const handleQuerySubmit = async (query: string) => {
+  const handleQuerySubmit = (newQuery: string) => {
     if (!selectedDataset) {
       toast({
         variant: "destructive",
-        description: "Please select a dataset first",
+        description: "Please select a dataset first"
       });
       return;
     }
-
-    setCurrentQuery(query);
-    setIsLoading(true);
     
-    try {
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query,
-          dataset: selectedDataset,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to analyze data');
-      }
-
-      const result = await response.json();
-      
-      if (result.success) {
-        setGeneratedCode(result.code || '');
-        setImageUrl(`data:image/png;base64,${result.image}`);
-        setExplanation(result.explanation || '');
-      } else {
-        throw new Error(result.error || 'Unknown error occurred');
-      }
-    } catch (error) {
-      console.error('Error analyzing data:', error);
-      toast({
-        variant: "destructive",
-        title: "Analysis Failed",
-        description: error.message || "Something went wrong. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    setQuery(newQuery);
+    runQuery({ datasetId: selectedDataset, queryText: newQuery });
   };
 
-  const handleDatasetUploaded = (newDataset: Dataset) => {
-    setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
-    setSelectedDataset(newDataset.id);
-    toast({
-      description: `Dataset ${newDataset.name} successfully uploaded`,
-    });
+  const handleDatasetUploaded = () => {
+    refetchDatasets();
+    toast({ description: "Dataset uploaded successfully" });
   };
+
+  if (datasetsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading datasets...</span>
+      </div>
+    );
+  }
+
+  if (datasetsError) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <h3 className="text-xl font-bold text-red-600 mb-2">Error Loading Datasets</h3>
+        <p>Please try refreshing the page.</p>
+        <Button onClick={() => window.location.reload()} className="mt-4">
+          Refresh Page
+        </Button>
+      </div>
+    );
+  }
+
+  const currentDataset = datasets?.find(d => d.id === selectedDataset);
 
   return (
-    <div className="flex h-screen bg-[#343541] text-[#ECECF1]">
-      {/* Left: Chat Interface (40% width) */}
-      <div className="w-2/5 border-r border-gray-700 flex flex-col">
-        <div className="p-4 border-b border-gray-700">
-          <h2 className="text-xl font-semibold mb-2">Data Analysis Assistant</h2>
-          <p className="text-sm text-gray-400">
-            Upload datasets and ask questions in natural language
-          </p>
-        </div>
-        
-        <div className="p-4 border-b border-gray-700">
-          <DatasetUploader 
-            onDatasetUploaded={handleDatasetUploaded}
-          />
-        </div>
-        
-        <div className="flex-1 overflow-auto">
-          <ChatPanel 
-            datasets={datasets}
-            selectedDataset={selectedDataset}
-            onSelectDataset={setSelectedDataset}
-            onQuerySubmit={handleQuerySubmit}
-            isLoading={isLoading}
-          />
-        </div>
-      </div>
+    <main className="container mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Left Panel */}
+        <div className="w-full md:w-2/5 space-y-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm border">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Datasets</h2>
+              <DatasetUploader onUploadComplete={handleDatasetUploaded} />
+            </div>
+            
+            {datasets && datasets.length > 0 ? (
+              <DatasetSelector 
+                datasets={datasets} 
+                selectedDataset={selectedDataset || ''} 
+                onSelectDataset={handleDatasetChange} 
+              />
+            ) : (
+              <p className="text-muted-foreground text-center py-4">No datasets available.</p>
+            )}
+          </div>
 
-      {/* Right: Dashboard (60% width) */}
-      <div className="w-3/5 flex flex-col">
-        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Analysis Results</h2>
-          <Tabs defaultValue="visualization" className="w-[400px]">
-            <TabsList className="bg-gray-800">
-              <TabsTrigger value="visualization" className="data-[state=active]:bg-[#10A37F]">Visualization</TabsTrigger>
-              <TabsTrigger value="code" className="data-[state=active]:bg-[#10A37F]">Code</TabsTrigger>
-              <TabsTrigger value="explanation" className="data-[state=active]:bg-[#10A37F]">Explanation</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="visualization" className="mt-4">
-              <div className="p-4 h-[calc(100vh-180px)]">
-                <VisualizationDisplay 
-                  imageUrl={imageUrl} 
-                  isLoading={isLoading} 
-                  query={currentQuery} 
-                />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="code" className="mt-4">
-              <div className="p-4 h-[calc(100vh-180px)]">
-                <CodeDisplay code={generatedCode} />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="explanation" className="mt-4">
-              <div className="p-4 h-[calc(100vh-180px)]">
-                <ExplanationDisplay explanation={explanation} />
-              </div>
-            </TabsContent>
-          </Tabs>
+          <div className="bg-white p-4 rounded-lg shadow-sm border">
+            <h2 className="text-xl font-semibold mb-4">Query Input</h2>
+            <QueryInput
+              dataset={currentDataset ? (currentDataset.name as DatasetType) : 'titanic'}
+              onSubmitQuery={handleQuerySubmit}
+              isLoading={isQueryRunning}
+            />
+          </div>
         </div>
-        <div className="flex-1 overflow-auto p-4">
-          {(!imageUrl && !isLoading) && (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="bg-gray-800 rounded-lg p-8 max-w-md">
-                <h3 className="text-xl font-medium mb-2">Ready to analyze your data</h3>
-                <p className="text-gray-400">
-                  Select a dataset and ask a question to generate visualizations and insights.
+
+        {/* Right Panel */}
+        <div className="w-full md:w-3/5">
+          <div className="bg-white p-4 rounded-lg shadow-sm border">
+            <h2 className="text-xl font-semibold text-center mb-4">Analysis Results</h2>
+            
+            {(code || isQueryRunning) ? (
+              <div className="space-y-6">
+                <Tabs defaultValue="visualization" className="w-full">
+                  <TabsList className="grid grid-cols-2 w-full">
+                    <TabsTrigger value="visualization">
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      Visualization
+                    </TabsTrigger>
+                    <TabsTrigger value="code">
+                      <Code className="w-4 h-4 mr-2" />
+                      Code
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="visualization" className="mt-4">
+                    <div className="space-y-4">
+                      <VisualizationDisplay 
+                        imageUrl={visualizationUrl}
+                        isLoading={isQueryRunning}
+                        query={query}
+                      />
+                      
+                      <ExplanationDisplay
+                        explanation={explanation}
+                        isLoading={isQueryRunning}
+                      />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="code" className="mt-4">
+                    <CodeDisplay code={code} />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            ) : (
+              <div className="bg-muted/30 rounded-lg p-8 text-center">
+                <h3 className="text-lg font-medium mb-2">Ready to analyze your data</h3>
+                <p className="text-muted-foreground">
+                  Select a dataset and type a natural language query to get started.
+                  Try something like "Plot a histogram of passenger ages" for the Titanic dataset.
                 </p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

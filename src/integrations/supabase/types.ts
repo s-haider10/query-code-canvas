@@ -9,7 +9,122 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      datasets: {
+        Row: {
+          columns: Json | null
+          columns_count: number | null
+          created_at: string | null
+          description: string | null
+          file_path: string
+          file_type: string
+          id: string
+          name: string
+          predefined: boolean | null
+          rows: number | null
+          sample: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          columns?: Json | null
+          columns_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          file_path: string
+          file_type: string
+          id?: string
+          name: string
+          predefined?: boolean | null
+          rows?: number | null
+          sample?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          columns?: Json | null
+          columns_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          file_path?: string
+          file_type?: string
+          id?: string
+          name?: string
+          predefined?: boolean | null
+          rows?: number | null
+          sample?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      queries: {
+        Row: {
+          created_at: string | null
+          dataset_id: string | null
+          execution_time: number | null
+          explanation: string | null
+          generated_code: string | null
+          id: string
+          query_text: string
+          success: boolean | null
+          user_id: string | null
+          visualization_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dataset_id?: string | null
+          execution_time?: number | null
+          explanation?: string | null
+          generated_code?: string | null
+          id?: string
+          query_text: string
+          success?: boolean | null
+          user_id?: string | null
+          visualization_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dataset_id?: string | null
+          execution_time?: number | null
+          explanation?: string | null
+          generated_code?: string | null
+          id?: string
+          query_text?: string
+          success?: boolean | null
+          user_id?: string | null
+          visualization_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queries_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "datasets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

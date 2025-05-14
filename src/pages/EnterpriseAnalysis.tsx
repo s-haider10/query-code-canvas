@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,9 +12,10 @@ import CodeDisplay from '@/components/CodeDisplay';
 import VisualizationDisplay from '@/components/VisualizationDisplay';
 import ExplanationDisplay from '@/components/ExplanationDisplay';
 import DatasetUploader from '@/components/DatasetUploader';
-import { Dataset } from '@/types/dataset';
+import { Dataset, DatasetType } from '@/types/dataset';
 
 const EnterpriseAnalysis = () => {
+  // Use string type for selectedDataset to match the API response
   const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
   const [query, setQuery] = useState<string>('');
   const [code, setCode] = useState<string>('');
@@ -111,8 +113,8 @@ const EnterpriseAnalysis = () => {
   }
 
   const currentDataset = datasets?.find(d => d.id === selectedDataset);
-  // Use a simple string for the dataset name to avoid type conflicts
-  const datasetName = currentDataset ? currentDataset.name : '';
+  // Define datasetName as a string variable, not as DatasetType
+  const datasetName: string = currentDataset ? currentDataset.name : '';
 
   return (
     <main className="container mx-auto px-4 py-8">

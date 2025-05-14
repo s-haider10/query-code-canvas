@@ -2,12 +2,12 @@
 import { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { DatasetType, sampleQueries } from '@/lib/data-utils';
+import { sampleQueries } from '@/lib/data-utils';
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 
 interface QueryInputProps {
-  dataset: DatasetType;
+  dataset: string; // Changed from DatasetType to string
   onSubmitQuery: (query: string) => void;
   isLoading: boolean;
 }

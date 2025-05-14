@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -113,7 +112,6 @@ const EnterpriseAnalysis = () => {
   }
 
   const currentDataset = datasets?.find(d => d.id === selectedDataset);
-  // Define datasetName as a simple string, not typed as DatasetType
   const datasetName = currentDataset ? currentDataset.name : '';
 
   return (

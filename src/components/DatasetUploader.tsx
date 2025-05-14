@@ -99,9 +99,19 @@ const DatasetUploader = ({ onUploadComplete }: DatasetUploaderProps) => {
       clearInterval(progressInterval);
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to upload dataset');
+        const errorText = await response.text();
+        let errorMessage;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || 'Failed to upload dataset';
+        } catch (e) {
+          // If parsing fails, use the raw text
+          errorMessage = errorText || 'Failed to upload dataset';
+        }
+        throw new Error(errorMessage);
       }
+      
+      const result = await response.json();
       
       setProgress(100);
       
@@ -128,6 +138,7 @@ const DatasetUploader = ({ onUploadComplete }: DatasetUploaderProps) => {
         description: error.message || "An error occurred while uploading dataset"
       });
       setUploading(false);
+      setProgress(0);
     }
   };
 

@@ -52,8 +52,23 @@ const EnterpriseAnalysis = () => {
     mutationFn: ({ datasetId, queryText }: { datasetId: string, queryText: string }) => 
       executeQuery(datasetId, queryText),
     onSuccess: (data) => {
+      console.log("Query execution result:", data);
       setCode(data.code || '');
-      setVisualizationUrl(data.image ? `data:image/png;base64,${data.image}` : data.image);
+      
+      // Handle image URL - check if it's base64 encoded or a path
+      if (data.image) {
+        if (data.image.startsWith('data:image')) {
+          setVisualizationUrl(data.image);
+        } else if (data.image.startsWith('/')) {
+          setVisualizationUrl(data.image);
+        } else {
+          // Assume it's base64 if not a data URL or path
+          setVisualizationUrl(`data:image/png;base64,${data.image}`);
+        }
+      } else {
+        setVisualizationUrl('');
+      }
+      
       setExplanation(data.explanation || '');
       setAnalysis(data.analysis || '');
       setInsights(data.insights || '');

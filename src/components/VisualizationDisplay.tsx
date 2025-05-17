@@ -43,6 +43,9 @@ const VisualizationDisplay = ({ imageUrl, isLoading, query }: VisualizationDispl
     });
   };
 
+  // Helper to determine if we have a valid image URL
+  const hasValidImageUrl = imageUrl && (imageUrl.startsWith('data:image') || imageUrl.startsWith('/'));
+
   return (
     <Card className="h-full bg-[#2A2B36] border-[#10A37F]/20">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -51,7 +54,7 @@ const VisualizationDisplay = ({ imageUrl, isLoading, query }: VisualizationDispl
           variant="outline" 
           size="sm" 
           onClick={handleDownload}
-          disabled={isLoading || !imageUrl}
+          disabled={isLoading || !hasValidImageUrl}
           className="h-8 border-[#10A37F]/20 text-[#10A37F] hover:bg-[#10A37F]/10"
         >
           <Download className="h-4 w-4 mr-1" />
@@ -65,7 +68,7 @@ const VisualizationDisplay = ({ imageUrl, isLoading, query }: VisualizationDispl
               <Loader2 className="h-10 w-10 text-[#10A37F] animate-spin" />
               <p className="text-sm text-[#10A37F] animate-pulse">Generating visualization...</p>
             </div>
-          ) : imageUrl ? (
+          ) : hasValidImageUrl ? (
             <img 
               src={imageUrl} 
               alt={`Visualization for: ${query}`} 
@@ -80,7 +83,7 @@ const VisualizationDisplay = ({ imageUrl, isLoading, query }: VisualizationDispl
           )}
         </div>
         
-        {!isLoading && imageUrl && (
+        {!isLoading && hasValidImageUrl && (
           <div className="flex items-center justify-end gap-2 mt-4">
             <span className="text-sm text-gray-400 mr-2">Was this helpful?</span>
             <Button

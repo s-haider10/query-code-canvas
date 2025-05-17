@@ -14,6 +14,27 @@ interface ExplanationDisplayProps {
 const ExplanationDisplay = ({ explanation, analysis, insights, isLoading }: ExplanationDisplayProps) => {
   const [tab, setTab] = useState<string>('explanation');
 
+  // Helper function to render content with proper paragraph breaks
+  const renderContent = (content: string | undefined) => {
+    if (!content) {
+      return (
+        <div className="text-center text-sm text-gray-400 py-8">
+          No content available
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-sm text-white/90 whitespace-pre-wrap">
+        {content.split('\n').map((paragraph, i) => (
+          <p key={i} className={i > 0 ? 'mt-4' : ''}>
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <Card className="bg-[#2A2B36] border-[#10A37F]/20">
       <CardHeader className="pb-2">
@@ -34,49 +55,13 @@ const ExplanationDisplay = ({ explanation, analysis, insights, isLoading }: Expl
         ) : (
           <>
             <TabsContent value="explanation" className="mt-0 pt-2">
-              {explanation ? (
-                <div className="text-sm text-white/90 whitespace-pre-wrap">
-                  {explanation.split('\n').map((paragraph, i) => (
-                    <p key={i} className={i > 0 ? 'mt-4' : ''}>
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-sm text-gray-400 py-8">
-                  No explanation available
-                </div>
-              )}
+              {renderContent(explanation)}
             </TabsContent>
             <TabsContent value="insights" className="mt-0 pt-2">
-              {insights ? (
-                <div className="text-sm text-white/90 whitespace-pre-wrap">
-                  {insights.split('\n').map((paragraph, i) => (
-                    <p key={i} className={i > 0 ? 'mt-4' : ''}>
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-sm text-gray-400 py-8">
-                  No insights available
-                </div>
-              )}
+              {renderContent(insights)}
             </TabsContent>
             <TabsContent value="summary" className="mt-0 pt-2">
-              {analysis ? (
-                <div className="text-sm text-white/90 whitespace-pre-wrap">
-                  {analysis.split('\n').map((paragraph, i) => (
-                    <p key={i} className={i > 0 ? 'mt-4' : ''}>
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-sm text-gray-400 py-8">
-                  No summary available
-                </div>
-              )}
+              {renderContent(analysis)}
             </TabsContent>
           </>
         )}

@@ -1,173 +1,166 @@
 
-// Follow Deno Supabase Edge Function syntax
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from '../_shared/cors.ts';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Buffer } from "https://deno.land/std@0.168.0/node/buffer.ts";
+import { parse } from "https://deno.land/std@0.170.0/encoding/csv.ts";
 
-// Define file processing functions
-async function extractColumnsFromCSV(content: string): Promise<string[]> {
-  const firstLine = content.split('\n')[0];
-  return firstLine.split(',').map(col => col.trim().replace(/"/g, ''));
-}
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-async function countRowsFromCSV(content: string): Promise<number> {
-  return content.split('\n').filter(line => line.trim().length > 0).length - 1; // Subtract header row
-}
-
-async function extractSampleFromCSV(content: string, numRows: number = 2): Promise<Record<string, any>[]> {
-  const lines = content.split('\n').filter(line => line.trim().length > 0);
-  if (lines.length <= 1) return [];
-  
-  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-  const sampleRows = lines.slice(1, numRows + 1);
-  
-  return sampleRows.map(row => {
-    const values = row.split(',').map(v => v.trim().replace(/"/g, ''));
-    const rowObj: Record<string, any> = {};
-    
-    headers.forEach((header, index) => {
-      const value = values[index] || '';
-      // Try to convert to number if possible
-      const numValue = Number(value);
-      rowObj[header] = !isNaN(numValue) && value !== '' ? numValue : value;
-    });
-    
-    return rowObj;
-  });
-}
-
-// Create a single edge function to handle dataset uploads
-Deno.serve(async (req) => {
-  // Handle CORS
+serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
   try {
-    // Get authentication details
-    const authHeader = req.headers.get('Authorization');
+    // Get the authorization header
+    const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'Missing Authorization header' }),
+        JSON.stringify({ error: 'No authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create Supabase client with the auth token
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    
-    // Get user data from the client
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") as string;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
     if (userError || !user) {
       return new Response(
-        JSON.stringify({ error: userError?.message || 'User not authenticated' }),
+        JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Parse the form data
+    // Process form data
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
-    
-    if (!file) {
+
+    if (!file || !name) {
       return new Response(
-        JSON.stringify({ error: 'No file provided' }),
+        JSON.stringify({ error: 'Missing file or dataset name' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate form data
-    if (!name) {
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+    if (!['csv', 'json', 'xls', 'xlsx'].includes(fileExt)) {
       return new Response(
-        JSON.stringify({ error: 'Dataset name is required' }),
+        JSON.stringify({ error: 'Unsupported file type. Please upload CSV, JSON, or Excel file' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Process file content
-    const fileContent = await file.text();
-    const fileExt = file.name.split('.').pop()?.toLowerCase();
-    const filePath = `${user.id}/${Date.now()}-${file.name}`;
+    // Convert file to buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
     
-    // Extract metadata based on file type
+    // Extract file content as text
+    const decoder = new TextDecoder('utf-8');
+    const fileContent = decoder.decode(buffer);
+
+    // Parse the dataset to extract columns and a sample
     let columns: string[] = [];
+    let sample: any[] = [];
     let rows = 0;
-    let sample: Record<string, any>[] = [];
-    let fullContent = fileContent; // Store the full content
-    
+
     if (fileExt === 'csv') {
-      columns = await extractColumnsFromCSV(fileContent);
-      rows = await countRowsFromCSV(fileContent);
-      sample = await extractSampleFromCSV(fileContent);
-    } else {
-      // For other file types (JSON, Excel), use placeholder values
-      // In a real implementation, you'd parse these properly
-      columns = ['column1', 'column2', 'column3'];
-      rows = 100;
-      sample = [{ column1: 'value1', column2: 'value2', column3: 'value3' }];
+      try {
+        const parsedData = parse(fileContent, { skipFirstRow: true, columns: true });
+        if (parsedData.length > 0) {
+          columns = Object.keys(parsedData[0]);
+          sample = parsedData.slice(0, 5);
+          rows = parsedData.length;
+        }
+      } catch (e) {
+        console.error("Failed to parse CSV:", e);
+      }
+    } else if (fileExt === 'json') {
+      try {
+        const parsedData = JSON.parse(fileContent);
+        if (Array.isArray(parsedData) && parsedData.length > 0) {
+          columns = Object.keys(parsedData[0]);
+          sample = parsedData.slice(0, 5);
+          rows = parsedData.length;
+        }
+      } catch (e) {
+        console.error("Failed to parse JSON:", e);
+      }
     }
 
     // Upload file to storage
-    const { data: storageData, error: storageError } = await supabaseClient.storage
+    const filePath = `${user.id}/${Date.now()}-${file.name}`;
+    const { error: uploadError, data: uploadData } = await supabase.storage
       .from('datasets')
-      .upload(filePath, file, {
+      .upload(filePath, buffer, {
         contentType: file.type,
-        upsert: true
       });
 
-    if (storageError) {
+    if (uploadError) {
       return new Response(
-        JSON.stringify({ error: `Failed to upload file: ${storageError.message}` }),
+        JSON.stringify({ error: `Failed to upload file: ${uploadError.message}` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get the public URL for the file
-    const { data: urlData } = await supabaseClient.storage
+    // Get public URL for the uploaded file
+    const { data: urlData } = supabase.storage
       .from('datasets')
       .getPublicUrl(filePath);
 
-    // Insert metadata into datasets table
-    const { data: datasetData, error: datasetError } = await supabaseClient
+    // Insert dataset metadata into the database
+    const { data: dataset, error: insertError } = await supabase
       .from('datasets')
-      .insert([
-        {
-          name,
-          description,
-          file_path: urlData.publicUrl,
-          file_type: fileExt,
-          columns: JSON.stringify(columns),
-          columns_count: columns.length,
-          rows,
-          user_id: user.id,
-          sample: JSON.stringify(sample),
-          full_content: fileContent // Store the full dataset content
-        }
-      ])
+      .insert({
+        name,
+        description,
+        file_path: urlData.publicUrl,
+        file_type: fileExt,
+        columns: columns,
+        columns_count: columns.length,
+        rows,
+        user_id: user.id,
+        sample: sample,
+        full_content: fileContent  // Store full dataset content
+      })
       .select()
       .single();
 
-    if (datasetError) {
+    if (insertError) {
+      // Clean up the uploaded file if metadata insertion fails
+      await supabase.storage
+        .from('datasets')
+        .remove([filePath]);
+
       return new Response(
-        JSON.stringify({ error: `Failed to save dataset metadata: ${datasetError.message}` }),
+        JSON.stringify({ error: `Failed to save dataset metadata: ${insertError.message}` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     return new Response(
-      JSON.stringify(datasetData),
+      JSON.stringify(dataset),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-    
   } catch (error) {
+    console.error('Error processing upload:', error);
     return new Response(
-      JSON.stringify({ error: `Server error: ${error.message}` }),
+      JSON.stringify({ error: `Upload failed: ${error.message}` }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

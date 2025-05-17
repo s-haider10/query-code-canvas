@@ -17,6 +17,7 @@ export type Database = {
           description: string | null
           file_path: string
           file_type: string
+          full_content: string | null
           id: string
           name: string
           predefined: boolean | null
@@ -31,6 +32,7 @@ export type Database = {
           description?: string | null
           file_path: string
           file_type: string
+          full_content?: string | null
           id?: string
           name: string
           predefined?: boolean | null
@@ -45,6 +47,7 @@ export type Database = {
           description?: string | null
           file_path?: string
           file_type?: string
+          full_content?: string | null
           id?: string
           name?: string
           predefined?: boolean | null

@@ -1,7 +1,12 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { decode as base64Decode } from "https://deno.land/std@0.82.0/encoding/base64.ts";
+
+interface AnalysisRequest {
+  dataset: string;
+  query: string;
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,252 +20,244 @@ serve(async (req) => {
   }
 
   try {
-    const openAiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAiApiKey) {
-      throw new Error('OpenAI API key is not configured');
+    // Get the authorization header for user authentication
+    const authHeader = req.headers.get('authorization');
+    
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") as string;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    // Get OpenAI API key from environment variables
+    const openAIKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openAIKey) {
+      return new Response(
+        JSON.stringify({ error: "OpenAI API key not configured" }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Create a Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    const { dataset: datasetId, query } = await req.json();
+    // Parse the request body
+    const { dataset: datasetId, query } = await req.json() as AnalysisRequest;
     
-    console.log(`Processing query for dataset: ${datasetId}`);
-    
-    if (!datasetId) {
-      throw new Error('Dataset ID is required');
+    if (!datasetId || !query) {
+      return new Response(
+        JSON.stringify({ error: "Missing dataset ID or query" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Get dataset information
-    const { data: datasets, error: datasetsError } = await supabase
+    console.log(`Processing analysis request for dataset ${datasetId} with query: ${query}`);
+
+    // Fetch the dataset from the database
+    const { data: datasets, error: datasetError } = await supabase
       .from('datasets')
       .select('*')
       .eq('id', datasetId);
-      
-    if (datasetsError) {
-      console.error("Error fetching dataset:", datasetsError);
-      throw new Error(`Dataset fetch error: ${datasetsError.message}`);
-    }
     
-    if (!datasets || datasets.length === 0) {
-      console.error(`No dataset found with id: ${datasetId}`);
-      throw new Error('Dataset not found');
+    if (datasetError || !datasets || datasets.length === 0) {
+      console.error("Error fetching dataset:", datasetError);
+      return new Response(
+        JSON.stringify({ error: `Dataset not found: ${datasetError?.message || "No dataset with that ID"}` }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-    
-    const datasetData = datasets[0];
-    console.log(`Found dataset: ${datasetData.name}`);
 
-    // Parse columns from the dataset
+    const dataset = datasets[0];
+    const fullContent = dataset.full_content;
+    
+    if (!fullContent) {
+      return new Response(
+        JSON.stringify({ error: "Dataset content not available" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Extract column names and data types from the dataset
     let columns = [];
-    try {
-      columns = JSON.parse(datasetData.columns);
-    } catch (e) {
-      console.error("Error parsing columns:", e);
-      columns = [];
-    }
-
-    // Get the dataset content
-    const dataContent = datasetData.full_content || '';
-    if (!dataContent) {
-      throw new Error('Dataset content not available');
-    }
-
-    // Extract data types by analyzing the sample data
-    const sample = datasetData.sample ? JSON.parse(datasetData.sample) : [];
-    const dataTypes: Record<string, string> = {};
+    let dtypes = {};
     
-    if (sample.length > 0) {
-      const firstRow = sample[0];
-      for (const key in firstRow) {
-        const value = firstRow[key];
-        dataTypes[key] = typeof value;
-      }
-    }
-
-    // Create prompt for data analysis similar to the notebook version
-    const systemPrompt = `
-    You are a data analysis assistant working with a pandas DataFrame.
-    Dataframe columns: ${columns.join(', ')}
-    Data types: ${JSON.stringify(dataTypes)}
-    
-    The user asks: ${query}
-    
-    Generate Python code to:
-    1. Perform the requested analysis
-    2. Create appropriate visualization using matplotlib/seaborn
-    3. Return insights about the data
-    
-    IMPORTANT:
-    - Use ONLY these variables: df, plt, sns
-    - Never use unsafe functions like eval() or os
-    - Use seaborn or matplotlib for plots
-    - Make sure the code is complete and ready to run
-    - Include all necessary imports
-    - Save the plot to a variable called 'fig'
-    
-    Provide your response in this format:
-    Analysis: [Brief analysis summary]
-    Code: [Python code only, without backticks]
-    `;
-
-    // Generate code with OpenAI
-    const codeResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', // Using a fast, affordable model
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: query }
-        ],
-        temperature: 0.2, // Lower temperature for more deterministic code
-      }),
-    });
-
-    if (!codeResponse.ok) {
-      const errorData = await codeResponse.text();
-      console.error("OpenAI API error:", errorData);
-      throw new Error(`OpenAI API error: ${errorData}`);
-    }
-
-    const codeData = await codeResponse.json();
-    const fullResponse = codeData.choices[0].message.content;
-
-    // Extract components from the response
-    let analysis = "";
-    let generatedCode = "";
-    
-    if (fullResponse.includes("Analysis:") && fullResponse.includes("Code:")) {
-      analysis = fullResponse.split("Analysis:")[1].split("Code:")[0].trim();
-      generatedCode = fullResponse.split("Code:")[1].trim();
-    } else {
-      // If the format isn't as expected, use the whole response as code
-      generatedCode = fullResponse;
-    }
-
-    // Generate explanation with a second API call
-    const explanationPrompt = `
-    I analyzed a dataset with these columns: ${columns.join(', ')}
-    
-    The user asked: "${query}"
-    
-    I generated this code:
-    ${generatedCode}
-    
-    Please provide a detailed explanation of:
-    1. What the code does
-    2. What insights can be derived from this analysis
-    3. Any interesting patterns or findings
-    4. Recommendations for further analysis
-    
-    Explanation should be understandable to non-technical users but still informative.
-    `;
-
-    const explanationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are an expert at explaining data visualizations in simple terms.' },
-          { role: 'user', content: explanationPrompt }
-        ],
-        temperature: 0.7, // Higher temperature for more creative explanation
-      }),
-    });
-
-    if (!explanationResponse.ok) {
-      const errorData = await explanationResponse.text();
-      console.error("OpenAI API error (explanation):", errorData);
-      throw new Error(`OpenAI API error (explanation): ${errorData}`);
-    }
-
-    const explanationData = await explanationResponse.json();
-    const explanation = explanationData.choices[0].message.content;
-
-    // For demo purposes, create a mock image
-    // In a real implementation, this would execute the code and generate an actual image
-    // For now, we'll use a predefined image based on dataset and query type
-    let imageUrl = '';
-    
-    // Simple logic to choose a relevant pre-made visualization based on the query
-    if (datasetData.name.toLowerCase().includes('titanic')) {
-      if (query.toLowerCase().includes('age')) {
-        imageUrl = '/titanic-age-histogram.png';
-      } else if (query.toLowerCase().includes('class') || query.toLowerCase().includes('survival')) {
-        imageUrl = '/titanic-class-survival.png';
-      } else if (query.toLowerCase().includes('gender')) {
-        imageUrl = '/titanic-gender-survival.png';
-      } else {
-        imageUrl = '/titanic-default.png';
-      }
-    } else if (datasetData.name.toLowerCase().includes('iris')) {
-      if (query.toLowerCase().includes('petal')) {
-        imageUrl = '/iris-petal-histogram.png';
-      } else if (query.toLowerCase().includes('sepal') && query.toLowerCase().includes('scatter')) {
-        imageUrl = '/iris-sepal-scatter.png';
-      } else if (query.toLowerCase().includes('box')) {
-        imageUrl = '/iris-boxplot.png';
-      } else {
-        imageUrl = '/iris-default.png';
-      }
-    } else {
-      imageUrl = '/default-chart.png';
-    }
-
-    // Store query in database
-    try {
-      const { error: insertError } = await supabase.from('queries').insert([
-        {
-          dataset_id: datasetId,
-          query_text: query,
-          generated_code: generatedCode,
-          explanation: explanation,
-          execution_time: 0.5, // Mock execution time
-          success: true
+    if (dataset.columns && Array.isArray(dataset.columns)) {
+      columns = dataset.columns;
+      // Infer data types from sample data if available
+      if (dataset.sample && Array.isArray(dataset.sample) && dataset.sample.length > 0) {
+        const sample = dataset.sample[0];
+        for (const col of columns) {
+          const val = sample[col];
+          if (typeof val === 'number') {
+            dtypes[col] = 'number';
+          } else if (typeof val === 'boolean') {
+            dtypes[col] = 'boolean';
+          } else {
+            dtypes[col] = 'string';
+          }
         }
-      ]);
-      
-      if (insertError) {
-        console.error("Error storing query in database:", insertError);
-        // Continue execution even if storing query fails
       }
-    } catch (e) {
-      console.error("Exception storing query:", e);
-      // Continue execution even if storing query fails
+    } else if (typeof dataset.columns === 'string') {
+      try {
+        columns = JSON.parse(dataset.columns);
+      } catch (e) {
+        console.error("Error parsing columns:", e);
+      }
     }
 
-    // Return the response
+    // Create a structured prompt similar to notebook_analyze function
+    const systemPrompt = `
+You are a data analysis assistant working with a pandas DataFrame.
+Dataframe columns: ${JSON.stringify(columns)}
+Data types: ${JSON.stringify(dtypes)}
+
+The user asks: ${query}
+
+Generate Python code to:
+1. Perform the requested analysis
+2. Create appropriate visualization using matplotlib/seaborn
+3. Return the plot object
+
+IMPORTANT:
+- Use ONLY these variables: df, plt, sns
+- Never use unsafe functions like eval() or os
+- Use seaborn or matplotlib for plots
+- Make sure to display the plot with plt.show() at the end
+- For analysis, provide a comprehensive explanation of the data patterns
+- Make the visualization clear and readable with proper labels and titles
+
+Format your response as THREE SEPARATE SECTIONS:
+1. Code: [Python code that performs the analysis and creates visualization]
+2. Analysis: [Comprehensive analysis of data patterns and insights]
+3. Summary: [Brief, concise summary of key findings]
+
+Each section should be distinct and clearly labeled.`;
+
+    // Call OpenAI API
+    const start = Date.now();
+    const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${openAIKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt }
+        ],
+        temperature: 0.2,
+      })
+    });
+
+    if (!openAIResponse.ok) {
+      const errorText = await openAIResponse.text();
+      console.error("OpenAI API error:", errorText);
+      return new Response(
+        JSON.stringify({ error: `OpenAI API error: ${errorText}` }),
+        { status: openAIResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const openAIData = await openAIResponse.json();
+    const responseText = openAIData.choices[0].message.content;
+    
+    // Parse the response to extract code and analysis
+    let code = "";
+    let analysis = "";
+    let summary = "";
+
+    if (responseText.includes("Code:")) {
+      const codeMatch = responseText.match(/Code:([\s\S]*?)(?=Analysis:|Summary:|$)/);
+      if (codeMatch && codeMatch[1]) {
+        code = codeMatch[1].trim();
+        // Remove any markdown code block formatting
+        code = code.replace(/```python\n/g, "").replace(/```/g, "");
+      }
+    }
+
+    if (responseText.includes("Analysis:")) {
+      const analysisMatch = responseText.match(/Analysis:([\s\S]*?)(?=Code:|Summary:|$)/);
+      if (analysisMatch && analysisMatch[1]) {
+        analysis = analysisMatch[1].trim();
+      }
+    }
+
+    if (responseText.includes("Summary:")) {
+      const summaryMatch = responseText.match(/Summary:([\s\S]*?)(?=Code:|Analysis:|$)/);
+      if (summaryMatch && summaryMatch[1]) {
+        summary = summaryMatch[1].trim();
+      }
+    }
+
+    // Create the Python script to execute the code with the dataset
+    // Assuming we'll capture the generated image as a base64 string
+    const executionTime = Date.now() - start;
+
+    // Save the query to the database
+    const { data: queryRecord, error: queryError } = await supabase
+      .from('queries')
+      .insert({
+        query_text: query,
+        dataset_id: datasetId,
+        generated_code: code,
+        explanation: analysis,
+        execution_time: executionTime / 1000, // Convert to seconds
+        success: true,
+      })
+      .select()
+      .single();
+
+    if (queryError) {
+      console.error("Error saving query:", queryError);
+      // Continue execution even if saving the query fails
+    }
+    
+    // For now, we'll use sample images based on the dataset type
+    // In a production environment, you would execute the Python code and generate the actual image
+    // This is just a placeholder implementation
+    let imageUrl = "";
+    
+    if (dataset.name.toLowerCase().includes("titanic")) {
+      const imageOptions = [
+        "/titanic-age-histogram.png",
+        "/titanic-class-survival.png",
+        "/titanic-gender-survival.png",
+        "/titanic-age-fare-scatter.png"
+      ];
+      imageUrl = imageOptions[Math.floor(Math.random() * imageOptions.length)];
+    } else if (dataset.name.toLowerCase().includes("iris")) {
+      const imageOptions = [
+        "/iris-petal-histogram.png",
+        "/iris-sepal-scatter.png",
+        "/iris-boxplot.png"
+      ];
+      imageUrl = imageOptions[Math.floor(Math.random() * imageOptions.length)];
+    } else if (dataset.name.toLowerCase().includes("gapminder")) {
+      const imageOptions = [
+        "/gapminder-gdp-life.png",
+        "/gapminder-continent.png",
+        "/gapminder-population.png"
+      ];
+      imageUrl = imageOptions[Math.floor(Math.random() * imageOptions.length)];
+    } else {
+      imageUrl = "/default-chart.png";
+    }
+
+    // Send the result back to the client
     return new Response(
       JSON.stringify({
-        code: generatedCode,
-        explanation: explanation,
-        analysis: analysis,
+        code,
+        explanation: analysis,
+        analysis: summary,
         image: imageUrl,
-        success: true
+        execution_time: executionTime / 1000
       }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-    
   } catch (error) {
-    console.error('Error in analyze function:', error);
+    console.error("Error in analyze function:", error);
     return new Response(
-      JSON.stringify({ error: error.message || 'An unknown error occurred' }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      JSON.stringify({ error: `Analysis failed: ${error.message || String(error)}` }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -94,6 +94,8 @@ export const uploadDataset = async (
 // Query API functions
 export const executeQuery = async (datasetId: string, queryText: string) => {
   try {
+    console.log(`Executing query on dataset ${datasetId}: ${queryText}`);
+    
     // Call the Supabase Edge Function for analysis
     const { data, error } = await supabase.functions.invoke('analyze', {
       body: JSON.stringify({
@@ -111,6 +113,7 @@ export const executeQuery = async (datasetId: string, queryText: string) => {
       throw new Error('No data returned from analyze function');
     }
     
+    console.log('Query execution result:', data);
     return data;
   } catch (error) {
     console.error('Error in executeQuery:', error);

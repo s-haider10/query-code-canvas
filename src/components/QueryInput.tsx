@@ -22,14 +22,23 @@ const QueryInput = ({ dataset, onSubmitQuery, isLoading }: QueryInputProps) => {
     }
   };
   
-  // Make sure we have example queries for the given dataset
-  const exampleQueries = sampleQueries[dataset as keyof typeof sampleQueries] || [
+  // Default example queries for any dataset
+  const defaultQueries = [
     "Give me a summary of this dataset",
     "Show a histogram of numeric columns",
     "What are the correlations between numerical variables?",
     "Create a scatter plot comparing two important variables",
-    "Show the distribution of categorical variables"
+    "Show the distribution of categorical variables",
+    "Compare means across different groups"
   ];
+  
+  // Make sure we have example queries for the given dataset
+  const datasetKey = dataset.toLowerCase();
+  const exampleQueries = 
+    (datasetKey.includes('titanic') && sampleQueries['titanic']) ||
+    (datasetKey.includes('iris') && sampleQueries['iris']) ||
+    (datasetKey.includes('gapminder') && sampleQueries['gapminder']) ||
+    defaultQueries;
   
   return (
     <div className="space-y-4">

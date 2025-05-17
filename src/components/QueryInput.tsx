@@ -29,7 +29,10 @@ const QueryInput = ({ dataset, onSubmitQuery, isLoading }: QueryInputProps) => {
     "What are the correlations between numerical variables?",
     "Create a scatter plot comparing two important variables",
     "Show the distribution of categorical variables",
-    "Compare means across different groups"
+    "Compare means across different groups",
+    "Analyze patterns in the data and create appropriate visualizations",
+    "Find outliers and explain their impact",
+    "Identify key factors that influence the target variable"
   ];
   
   // Make sure we have example queries for the given dataset

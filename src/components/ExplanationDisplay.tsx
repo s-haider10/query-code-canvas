@@ -7,10 +7,11 @@ import { Loader2 } from 'lucide-react';
 interface ExplanationDisplayProps {
   explanation: string;
   analysis?: string;
+  insights?: string;
   isLoading: boolean;
 }
 
-const ExplanationDisplay = ({ explanation, analysis, isLoading }: ExplanationDisplayProps) => {
+const ExplanationDisplay = ({ explanation, analysis, insights, isLoading }: ExplanationDisplayProps) => {
   const [tab, setTab] = useState<string>('explanation');
 
   return (
@@ -18,9 +19,10 @@ const ExplanationDisplay = ({ explanation, analysis, isLoading }: ExplanationDis
       <CardHeader className="pb-2">
         <CardTitle className="text-md font-medium text-[#10A37F]">Analysis</CardTitle>
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid grid-cols-2 w-full">
+          <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="explanation">Explanation</TabsTrigger>
-            <TabsTrigger value="analysis">Summary</TabsTrigger>
+            <TabsTrigger value="insights">Insights</TabsTrigger>
+            <TabsTrigger value="summary">Summary</TabsTrigger>
           </TabsList>
         </Tabs>
       </CardHeader>
@@ -46,7 +48,22 @@ const ExplanationDisplay = ({ explanation, analysis, isLoading }: ExplanationDis
                 </div>
               )}
             </TabsContent>
-            <TabsContent value="analysis" className="mt-0 pt-2">
+            <TabsContent value="insights" className="mt-0 pt-2">
+              {insights ? (
+                <div className="text-sm text-white/90 whitespace-pre-wrap">
+                  {insights.split('\n').map((paragraph, i) => (
+                    <p key={i} className={i > 0 ? 'mt-4' : ''}>
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-sm text-gray-400 py-8">
+                  No insights available
+                </div>
+              )}
+            </TabsContent>
+            <TabsContent value="summary" className="mt-0 pt-2">
               {analysis ? (
                 <div className="text-sm text-white/90 whitespace-pre-wrap">
                   {analysis.split('\n').map((paragraph, i) => (
@@ -57,7 +74,7 @@ const ExplanationDisplay = ({ explanation, analysis, isLoading }: ExplanationDis
                 </div>
               ) : (
                 <div className="text-center text-sm text-gray-400 py-8">
-                  No analysis summary available
+                  No summary available
                 </div>
               )}
             </TabsContent>

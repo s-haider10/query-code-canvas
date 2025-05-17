@@ -22,6 +22,7 @@ const EnterpriseAnalysis = () => {
   const [visualizationUrl, setVisualizationUrl] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
   const [analysis, setAnalysis] = useState<string>('');
+  const [insights, setInsights] = useState<string>('');
   
   const { toast } = useToast();
 
@@ -55,6 +56,7 @@ const EnterpriseAnalysis = () => {
       setVisualizationUrl(data.image ? `data:image/png;base64,${data.image}` : data.image);
       setExplanation(data.explanation || '');
       setAnalysis(data.analysis || '');
+      setInsights(data.insights || '');
       toast({ description: "Query executed successfully" });
     },
     onError: (error: Error) => {
@@ -73,6 +75,7 @@ const EnterpriseAnalysis = () => {
     setVisualizationUrl('');
     setExplanation('');
     setAnalysis('');
+    setInsights('');
     setQuery('');
   };
 
@@ -180,6 +183,7 @@ const EnterpriseAnalysis = () => {
                       <ExplanationDisplay
                         explanation={explanation}
                         analysis={analysis}
+                        insights={insights}
                         isLoading={isQueryRunning}
                       />
                     </div>

@@ -9,6 +9,7 @@ export interface QueryResult {
   generated_code: string;
   visualization_url: string;
   explanation: string;
+  insights?: string;
   execution_time: number;
   created_at: string;
 }

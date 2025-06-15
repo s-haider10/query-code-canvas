@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,7 @@ interface DatasetSelectorProps {
   datasets: DatasetMetadata[];
   selectedDataset: string;
   onSelectDataset: (dataset: string) => void;
-  onDeleteDataset: (datasetId: string) => void;
+  onDeleteDataset?: (datasetId: string) => void;
 }
 
 const DatasetSelector = ({
@@ -42,7 +43,7 @@ const DatasetSelector = ({
 
   // Helper: Determine if dataset belongs to the current user
   const canDelete = (dataset: DatasetMetadata) =>
-    user && dataset.user_id === user.id;
+    !!onDeleteDataset && user && dataset.user_id === user.id;
 
   return (
     <div className="space-y-4">
@@ -95,7 +96,7 @@ const DatasetSelector = ({
                         "Are you sure you want to delete this dataset? This cannot be undone."
                       )
                     ) {
-                      onDeleteDataset(dataset.id);
+                      onDeleteDataset?.(dataset.id);
                     }
                   }}
                 >

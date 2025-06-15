@@ -1,4 +1,3 @@
-
 export interface Dataset {
   id: string;
   name: string;
@@ -48,5 +47,6 @@ export interface DatasetMetadata {
   sample?: any[] | string;
   full_content?: string;
   metadata?: any;
+  user_id?: string;
+  file_path?: string;
 }
-

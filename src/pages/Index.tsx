@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { DatasetType, generateSampleCode, getVisualizationImage } from '@/lib/data-utils';
 import DatasetSelector from '@/components/DatasetSelector';
@@ -84,8 +83,8 @@ const Index = () => {
           <div className="lg:col-span-1">
             <DatasetSelector 
               datasets={datasets}
-              selectedDataset={selectedDataset} 
-              onSelectDataset={handleDatasetChange} 
+              selectedDataset={selectedDataset}
+              onSelectDataset={handleDatasetChange}
             />
           </div>
           

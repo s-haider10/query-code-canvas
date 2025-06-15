@@ -101,19 +101,14 @@ const Workspace = () => {
       // Remove from storage first
       if (dataset.file_path) {
         // Extract storage file path (after bucket base url)
-        // Support both public and private URLs (datasets storage bucket)
         let storagePath = dataset.file_path;
-        // Supabase .getPublicUrl or .getSignedUrl usually returns:
-        // https://<project>.supabase.co/storage/v1/object/public/datasets/{user_id}/filename.csv
         const filePathMatch = storagePath.match(/\/datasets\/(.+)$/);
         let key = "";
         if (filePathMatch && filePathMatch[1]) {
           key = filePathMatch[1];
         } else if (storagePath.includes("/object/sign/datasets/")) {
-          // Signed url case
           key = storagePath.split("/object/sign/datasets/")[1]?.split("?")[0] ?? "";
         } else {
-          // fallback: could be just the key
           key = storagePath;
         }
 
@@ -122,7 +117,6 @@ const Workspace = () => {
             .from("datasets")
             .remove([key]);
           if (storageError) {
-            // Allow deletion to continue but show warning
             toast({
               title: "Could not remove file from storage",
               description: storageError.message,
@@ -150,12 +144,10 @@ const Workspace = () => {
       toast({
         title: "Dataset deleted",
         description: "The dataset has been deleted.",
-        variant: "success",
+        variant: "default",
         duration: 3000,
       });
-      // Refetch datasets: updates selector & cards
       refetch();
-      // Deselect if deleted
       if (selectedDataset === datasetId) setSelectedDataset(null);
     } catch (e: any) {
       toast({

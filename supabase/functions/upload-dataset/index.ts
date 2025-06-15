@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Buffer } from "https://deno.land/std@0.168.0/node/buffer.ts";
@@ -169,6 +168,7 @@ serve(async (req) => {
       );
     }
 
+    // Return the stored dataset including all fields
     return new Response(
       JSON.stringify(dataset),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,12 +134,12 @@ const DatasetSelector = ({
 
               <div>
                 <h4 className="text-sm font-semibold mb-1 text-zinc-400">Columns</h4>
-                {/* Horizontal scroll for columns, showing 5 at a time */}
+                {/* Horizontal scroll for columns, showing 5 at a time with scrollbar */}
                 <div
-                  className="flex gap-1.5 overflow-x-auto no-scrollbar"
+                  className="flex gap-1.5 overflow-x-auto"
                   style={{
                     maxWidth: "100%",
-                    paddingBottom: 2,
+                    paddingBottom: 8,      // extra spacing for visible scrollbar
                   }}
                 >
                   {columns.map((column: string, index: number) => (
@@ -179,4 +178,3 @@ const DatasetSelector = ({
 };
 
 export default DatasetSelector;
-

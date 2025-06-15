@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DatasetChat } from "@/types/dataset";
@@ -58,6 +57,7 @@ export function useDatasetChats(datasetId: string | null, userId: string | null)
       if (error) throw error;
       return data as DatasetChat;
     },
+    // Just invalidate, toast is now controlled by UI with limited duration
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dataset_chats", datasetId, userId] });
     },

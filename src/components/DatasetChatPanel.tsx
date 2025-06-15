@@ -11,7 +11,9 @@ import { Loader2 } from "lucide-react";
 // Props: datasetId
 const DatasetChatPanel = ({ datasetId }: { datasetId: string }) => {
   const { user } = useAuth();
-  const { chats, createChat, isLoading: chatsLoading } = useDatasetChats(datasetId);
+
+  // Pass user ID to the chat hook to ensure `user_id` is set and queries are user-specific
+  const { chats, createChat, isLoading: chatsLoading } = useDatasetChats(datasetId, user?.id ?? null);
 
   // Selected chat session
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
@@ -30,7 +32,8 @@ const DatasetChatPanel = ({ datasetId }: { datasetId: string }) => {
   // Start a new chat session
   const handleStartChat = async () => {
     if (!user) return;
-    const chat = await createChat();
+    // Pass null for untitled chat. Await createChat (which requires title param now)
+    const chat = await createChat(null);
     setSelectedChatId(chat.id);
   };
 

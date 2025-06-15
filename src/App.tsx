@@ -14,6 +14,7 @@ import AuthPage from "./pages/AuthPage";
 import Navigation from "@/components/Navigation";
 import LandingPage from "./pages/LandingPage";
 import Workspace from "./pages/Workspace";
+import ProfilePage from "./pages/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

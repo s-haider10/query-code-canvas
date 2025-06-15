@@ -45,11 +45,44 @@ export function useDatasetChats(datasetId: string | null, userId: string | null)
     },
   });
 
+  // Rename chat title
+  const updateChatTitleMutation = useMutation({
+    mutationFn: async (args: { chatId: string; title: string }) => {
+      const { chatId, title } = args;
+      const { data, error } = await supabase
+        .from("dataset_chats")
+        .update({ title })
+        .eq("id", chatId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as DatasetChat;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dataset_chats", datasetId, userId] });
+    },
+  });
+
+  // Delete chat session
+  const deleteChatMutation = useMutation({
+    mutationFn: async (chatId: string) => {
+      const { error } = await supabase.from("dataset_chats").delete().eq("id", chatId);
+      if (error) throw error;
+      return chatId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dataset_chats", datasetId, userId] });
+    },
+  });
+
   return {
     chats,
     isLoading,
     error,
     createChat: createChatMutation.mutateAsync,
     creating: createChatMutation.isPending,
+    updateChatTitle: async (chatId: string, title: string) =>
+      updateChatTitleMutation.mutateAsync({ chatId, title }),
+    deleteChat: deleteChatMutation.mutateAsync,
   };
 }

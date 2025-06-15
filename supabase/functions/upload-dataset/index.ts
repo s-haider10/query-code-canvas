@@ -69,7 +69,7 @@ serve(async (req) => {
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = new Uint8Array(arrayBuffer);
-    
+
     // Extract file content as text
     const decoder = new TextDecoder('utf-8');
     const fileContent = decoder.decode(buffer);
@@ -81,14 +81,18 @@ serve(async (req) => {
 
     if (fileExt === 'csv') {
       try {
-        const parsedData = parse(fileContent, { skipFirstRow: true, columns: true });
-        if (parsedData.length > 0) {
+        // parse returns array of objects; { columns: true } means header row is used as column keys
+        const parsedData = parse(fileContent, { skipFirstRow: true, columns: true }) as any[];
+        if (Array.isArray(parsedData) && parsedData.length > 0) {
           columns = Object.keys(parsedData[0]);
           sample = parsedData.slice(0, 5);
           rows = parsedData.length;
         }
       } catch (e) {
-        console.error("Failed to parse CSV:", e);
+        console.error("Failed to parse CSV file for metadata", e);
+        columns = [];
+        sample = [];
+        rows = 0;
       }
     } else if (fileExt === 'json') {
       try {
@@ -99,13 +103,25 @@ serve(async (req) => {
           rows = parsedData.length;
         }
       } catch (e) {
-        console.error("Failed to parse JSON:", e);
+        console.error("Failed to parse JSON file for metadata", e);
+        columns = [];
+        sample = [];
+        rows = 0;
       }
+    } else {
+      // For Excel, do not process here
+      columns = [];
+      sample = [];
+      rows = 0;
     }
+
+    // Defensive: If columns/sample are objects, stringify them for DB
+    const columnsToSave = Array.isArray(columns) ? JSON.stringify(columns) : "[]";
+    const sampleToSave = Array.isArray(sample) ? JSON.stringify(sample) : "[]";
 
     // Upload file to storage
     const filePath = `${user.id}/${Date.now()}-${file.name}`;
-    const { error: uploadError, data: uploadData } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('datasets')
       .upload(filePath, buffer, {
         contentType: file.type,
@@ -128,14 +144,14 @@ serve(async (req) => {
       .from('datasets')
       .insert({
         name,
-        description,
+        description: description || null,
         file_path: urlData.publicUrl,
         file_type: fileExt,
-        columns: columns,
-        columns_count: columns.length,
+        columns: columnsToSave,
+        columns_count: Array.isArray(columns) ? columns.length : 0,
         rows,
         user_id: user.id,
-        sample: sample,
+        sample: sampleToSave,
         full_content: fileContent  // Store full dataset content
       })
       .select()

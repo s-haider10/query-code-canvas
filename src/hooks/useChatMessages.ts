@@ -45,11 +45,53 @@ export function useChatMessages(chatId: string | null) {
     },
   });
 
+  // Extended: Send user message, call OpenAI, save assistant reply
+  const sendUserMessageWithAIReply = async ({
+    user_id,
+    userContent,
+    data_profile,
+  }: {
+    user_id: string;
+    userContent: string;
+    data_profile: string;
+  }) => {
+    if (!chatId) throw new Error("Chat not selected");
+    // 1. Save user message
+    await sendMessage.mutateAsync({ role: "user", content: userContent, user_id });
+    // 2. Call ai-chat edge function for reply
+    // The function expects { query, data_profile }
+    let aiReply: string | null = null;
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-chat", {
+        body: {
+          query: userContent,
+          data_profile,
+        },
+      });
+      if (error) {
+        // If error, store a placeholder
+        aiReply = "Sorry, there was an error getting a response from the AI assistant.";
+      } else {
+        aiReply = (data as any)?.content ?? "No response from AI assistant.";
+      }
+    } catch (err) {
+      aiReply = "Sorry, there was an internal error getting a response from the AI assistant.";
+    }
+    // 3. Save assistant reply
+    await sendMessage.mutateAsync({
+      role: "assistant",
+      content: aiReply,
+      user_id,
+    });
+  };
+
   return {
     messages,
     isLoading,
     error,
     sendMessage: sendMessage.mutateAsync,
+    sendUserMessageWithAIReply, // New: wraps user message + AI reply
     sending: sendMessage.isPending,
   };
 }
+

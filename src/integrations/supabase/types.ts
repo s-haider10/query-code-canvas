@@ -9,6 +9,65 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "dataset_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dataset_chats: {
+        Row: {
+          created_at: string
+          dataset_id: string
+          id: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dataset_id: string
+          id?: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dataset_id?: string
+          id?: string
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       datasets: {
         Row: {
           columns: Json | null
@@ -19,6 +78,7 @@ export type Database = {
           file_type: string
           full_content: string | null
           id: string
+          metadata: Json | null
           name: string
           predefined: boolean | null
           rows: number | null
@@ -34,6 +94,7 @@ export type Database = {
           file_type: string
           full_content?: string | null
           id?: string
+          metadata?: Json | null
           name: string
           predefined?: boolean | null
           rows?: number | null
@@ -49,6 +110,7 @@ export type Database = {
           file_type?: string
           full_content?: string | null
           id?: string
+          metadata?: Json | null
           name?: string
           predefined?: boolean | null
           rows?: number | null

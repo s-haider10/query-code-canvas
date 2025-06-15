@@ -127,7 +127,7 @@ const DatasetUploader = ({ onUploadComplete }: DatasetUploaderProps) => {
           Upload Dataset
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-[#17171e]/80 dark:bg-[#17171e]/80 dark:border dark:border-zinc-700 dark:shadow-lg dark:rounded-lg">
         <DialogHeader>
           <DialogTitle>Upload Dataset</DialogTitle>
           <DialogDescription>
@@ -184,7 +184,7 @@ const DatasetUploader = ({ onUploadComplete }: DatasetUploaderProps) => {
                   </span>
                   <span className="text-sm font-medium">{progress}%</span>
                 </div>
-                <Progress value={progress} className="h-2" />
+                <Progress value={progress} className="h-2 bg-zinc-700" />
               </div>
             )}
           </div>

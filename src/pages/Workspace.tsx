@@ -19,21 +19,21 @@ const Workspace = () => {
   });
 
   return (
-    <div className="flex flex-col h-full min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      <header className="flex items-center justify-between px-6 py-4 bg-white shadow">
+    <div className="flex flex-col min-h-screen bg-gradient-to-tr from-[#181924] via-[#23243c] to-[#181825] text-white">
+      <header className="flex items-center justify-between px-8 py-5 border-b border-zinc-800/80 backdrop-blur-lg sticky top-0 z-30 bg-[#191925]/80">
         <div className="flex items-center gap-3">
-          <span className="text-2xl font-bold text-primary">DEXA Workspace</span>
+          <span className="text-2xl font-bold text-white tracking-wide">
+            DEXA Workspace
+          </span>
         </div>
-        <div>
-          <DatasetUploader onUploadComplete={refetch} />
-        </div>
+        <DatasetUploader onUploadComplete={refetch} />
       </header>
-      <main className="flex flex-1 flex-col md:flex-row gap-6 p-6">
+      <main className="flex flex-1 flex-col md:flex-row gap-6 p-6 max-w-7xl mx-auto w-full">
         {/* Sidebar: Dataset picker */}
-        <aside className="w-full md:w-64 bg-white rounded-lg shadow h-fit p-4">
-          <h3 className="text-lg font-bold mb-2">Your Datasets</h3>
+        <aside className="w-full md:w-80 bg-[#21222e]/70 backdrop-blur rounded-2xl shadow-lg border border-zinc-700/30 p-5 h-fit">
+          <h3 className="text-lg font-bold mb-3 text-zinc-100">Your Datasets</h3>
           {isLoading ? (
-            <Loader2 className="animate-spin w-4 h-4 text-zinc-400" />
+            <Loader2 className="animate-spin w-5 h-5 text-zinc-400" />
           ) : (
             <DatasetSelector
               datasets={datasets}
@@ -43,10 +43,12 @@ const Workspace = () => {
           )}
         </aside>
         {/* Main: Dataset Preview and Chat */}
-        <section className="flex-1 flex flex-col gap-6">
+        <section className="flex-1 flex flex-col gap-5">
           {!selectedDataset ? (
-            <div className="flex flex-col items-center justify-center h-full border rounded-lg bg-white p-12">
-              <h2 className="text-xl mb-2 text-muted-foreground">Select or upload a dataset to begin</h2>
+            <div className="flex flex-col items-center justify-center h-full border border-zinc-700/40 rounded-2xl bg-[#17171e]/60 p-14 shadow">
+              <h2 className="text-2xl mb-2 text-zinc-400 font-semibold">
+                Select or upload a dataset to begin
+              </h2>
             </div>
           ) : (
             <DatasetChatPanel datasetId={selectedDataset} />

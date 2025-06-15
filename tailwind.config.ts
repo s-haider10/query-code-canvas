@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -71,12 +70,19 @@ export default {
 					number: '#b5cea8',
 					comment: '#6a9955',
 					function: '#dcdcaa',
-				}
+				},
+				"dexa-glass": "rgba(34,37,46,0.65)",
+				"dexa-glass-elevated": "rgba(25,25,37,0.8)",
+				"dexa-primary": "#8bbeee",
+				"dexa-muted": "#23243c",
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				sm: 'calc(var(--radius) - 4px)',
+				xl: "1rem",
+				"2xl": "1.5rem",
+				"3xl": "2rem",
 			},
 			keyframes: {
 				'accordion-down': {

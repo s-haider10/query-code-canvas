@@ -7,15 +7,21 @@
 body {
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.01em;
-  background: linear-gradient(120deg, #17171a 0%, #181924 100%);
+  background: linear-gradient(120deg, #181924 0%, #23243c 100%);
   color: #f8fafc;
 }
+
 ::-webkit-scrollbar {
   width: 6px;
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #272732;
+  background: #22223a;
   border-radius: 3px;
 }
-/* No cards or UI elements will have excessive box-shadow by default */
+
+*::selection {
+  background: #4747f3;
+  color: #fff;
+}

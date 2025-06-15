@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { DatasetChat, ChatMessage } from "@/types/dataset";
 import { useAuth } from "@/context/AuthContext";
@@ -89,20 +88,17 @@ const DatasetChatPanel = ({
                       `}
                   >
                     <div
-                      className={`relative max-w-[80%] px-5 py-3 rounded-2xl text-base whitespace-pre-line
-                        shadow-md
+                      className={`relative max-w-[78%] px-5 py-3 rounded-[2rem] text-base whitespace-pre-line shadow-lg
                         ${isUser
-                          ? "bg-gradient-to-br from-[#13EF95] to-[#10A37F] text-white rounded-br-2xl rounded-tr-2xl rounded-tl-lg mr-1"
-                          : "bg-zinc-800/95 text-zinc-100 border border-zinc-700/60 rounded-bl-2xl rounded-tr-2xl rounded-br-lg ml-1"}
+                          ? "bg-[#4d818a] text-white mr-1"
+                          : "bg-zinc-800/90 text-zinc-100 border border-zinc-700/60 ml-1"}
                         animate-fade-in
                       `}
                       style={{
-                        borderTopRightRadius: isUser ? "1.25rem" : "1.125rem",
-                        borderTopLeftRadius: isUser ? "1.125rem" : "1.25rem",
+                        borderRadius: '2.2rem',
                         boxShadow: isUser
-                          ? "0 2px 12px 0 rgba(19,239,149,0.11)"
-                          : "0 2px 12px 0 rgba(0,0,0,0.15)",
-                        // mimic more ChatGPT styling
+                          ? '0 2px 14px 0 rgba(77,129,138,0.17)'
+                          : '0 2px 14px 0 rgba(0,0,0,0.13)',
                       }}
                     >
                       {msg.content}
@@ -113,7 +109,7 @@ const DatasetChatPanel = ({
               {/* Show UI feedback while waiting for AI's reply */}
               {aiThinking && (
                 <div className="flex justify-start">
-                  <div className="rounded-2xl px-5 py-3 max-w-[70%] text-base bg-zinc-800/95 text-zinc-100 flex items-center gap-2 animate-fade-in shadow-md border border-zinc-700/60">
+                  <div className="rounded-[2rem] px-5 py-3 max-w-[70%] text-base bg-zinc-800/95 text-zinc-100 flex items-center gap-2 animate-fade-in shadow-md border border-zinc-700/60">
                     <Loader2 className="animate-spin w-4 h-4" /> AI is thinking...
                   </div>
                 </div>
@@ -134,13 +130,13 @@ const DatasetChatPanel = ({
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question about this dataset..."
           disabled={!chatId || sending || aiThinking}
-          className="rounded-full border-zinc-700 focus:border-green-400 bg-zinc-950/90 px-4 py-2 text-base transition-shadow focus:ring-green-400/30 shadow-inner"
+          className="rounded-full border-zinc-700 focus:border-[#4d818a] bg-zinc-950/90 px-4 py-2 text-base transition-shadow focus:ring-[#4d818a]/30 shadow-inner"
           autoFocus
         />
         <Button
           type="submit"
           disabled={!chatId || !input.trim() || sending || aiThinking}
-          className="rounded-full px-6 py-2 bg-gradient-to-br from-[#13EF95] to-[#10A37F] text-white shadow-lg hover:from-[#10A37F] hover:to-[#20dab3] font-semibold transition-all"
+          className="rounded-full px-6 py-2 bg-[#4d818a] text-white shadow-lg hover:bg-[#30636a] font-semibold transition-all"
         >
           {(sending || aiThinking) ? <Loader2 className="animate-spin w-4 h-4" /> : "Send"}
         </Button>
@@ -150,4 +146,3 @@ const DatasetChatPanel = ({
 };
 
 export default DatasetChatPanel;
-

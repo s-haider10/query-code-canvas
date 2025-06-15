@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import DatasetUploader from "@/components/DatasetUploader";
 import DatasetSelector from "@/components/DatasetSelector";
@@ -98,25 +97,21 @@ const Workspace = () => {
             DEXA Workspace
           </span>
         </div>
-        <DatasetUploader onUploadComplete={refetch} />
+        {/* Profile button moved here from sidebar */}
+        <button
+          onClick={() => navigate("/profile")}
+          className="focus:outline-none"
+          title="Profile"
+        >
+          <Avatar className="h-10 w-10 border border-zinc-700 shadow">
+            <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.user_metadata?.full_name || user?.email} />
+            <AvatarFallback>{getUserInitials()}</AvatarFallback>
+          </Avatar>
+        </button>
       </header>
       <main className="flex flex-1 flex-col md:flex-row gap-6 p-6 max-w-7xl mx-auto w-full">
-        {/* Sidebar: Profile + Chat Sessions + Dataset picker */}
+        {/* Sidebar: Chat Sessions + Dataset picker */}
         <aside className="w-full md:w-80 bg-[#21222e]/70 backdrop-blur rounded-2xl shadow-lg border border-zinc-700/30 p-5 h-fit flex flex-col gap-5">
-          {/* Profile Avatar */}
-          <div className="flex items-center gap-2 mb-2">
-            <button
-              onClick={() => navigate("/profile")}
-              className="focus:outline-none"
-              title="Profile"
-            >
-              <Avatar className="h-10 w-10 border border-zinc-700 shadow">
-                <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.user_metadata?.full_name || user?.email} />
-                <AvatarFallback>{getUserInitials()}</AvatarFallback>
-              </Avatar>
-            </button>
-            <div className="text-xs font-semibold text-zinc-300">{user?.user_metadata?.full_name || user?.email}</div>
-          </div>
           {/* Chat Sessions */}
           <div>
             <span className="text-xs text-zinc-400">Chat sessions:</span>
@@ -222,10 +217,13 @@ const Workspace = () => {
               + New Chat
             </Button>
           </div>
-
           {/* Dataset List */}
           <div>
             <h3 className="text-lg font-bold mb-3 text-zinc-100">Your Datasets</h3>
+            {/* Move DatasetUploader here */}
+            <div className="mb-4">
+              <DatasetUploader onUploadComplete={refetch} />
+            </div>
             {isLoading ? (
               <Loader2 className="animate-spin w-5 h-5 text-zinc-400" />
             ) : (

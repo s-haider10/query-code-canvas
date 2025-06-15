@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +12,8 @@ import NotFound from "./pages/NotFound";
 import AdvancedAnalysis from "./pages/AdvancedAnalysis";
 import AuthPage from "./pages/AuthPage";
 import Navigation from "@/components/Navigation";
+import LandingPage from "./pages/LandingPage";
+import Workspace from "./pages/Workspace";
 
 const queryClient = new QueryClient();
 
@@ -24,18 +25,20 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/" element={<LandingPage />} />
             <Route
-              path="/"
+              path="/auth"
+              element={<AuthPage />}
+            />
+            <Route
+              path="/app"
               element={
                 <ProtectedRoute>
-                  <div className="min-h-screen flex flex-col">
-                    <Navigation />
-                    <EnterpriseAnalysis />
-                  </div>
+                  <Workspace />
                 </ProtectedRoute>
               }
             />
+            {/* Classic mode/old workflow, left for transition: */}
             <Route
               path="/classic"
               element={

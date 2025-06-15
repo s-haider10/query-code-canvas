@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -44,8 +43,10 @@ const Navigation = () => {
     <header className="bg-white shadow-sm">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Data Analysis Platform</h1>
-          <p className="text-muted-foreground">Generate data visualizations with AI</p>
+          <Link to="/" className="hover:underline">
+            <h1 className="text-2xl font-bold text-primary">DEXA AI</h1>
+          </Link>
+          <p className="text-muted-foreground">Chat with your data instantly</p>
         </div>
         
         {user ? (

@@ -68,8 +68,19 @@ const DatasetChatPanel = ({
     }
   }
 
-  // Only allow send if not thinking
-  const canSend = !!chatId && !!input.trim() && !sending && !aiThinking && !deferDisplayAI;
+  // Only allow send if not thinking AND (no AI message is pending) AND it's the user's turn
+  // Always allow the first message to be sent
+  const isFirstMessage = !messages || messages.length === 0;
+  const canSend =
+    !!chatId &&
+    !!input.trim() &&
+    !sending &&
+    !aiThinking &&
+    !deferDisplayAI &&
+    (isFirstMessage ||
+      (messages &&
+        messages.length > 0 &&
+        messages[messages.length - 1].role === "assistant"));
 
   // The main handler for sending
   const handleSend = async (e: React.FormEvent) => {
@@ -203,7 +214,8 @@ const DatasetChatPanel = ({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question about this dataset..."
-          disabled={!canSend}
+          // DO NOT disable input box - allow user to type always
+          disabled={false}
           className="rounded-full border-zinc-700 focus:border-[#4d818a] bg-zinc-950/90 px-4 py-2 text-base transition-shadow focus:ring-[#4d818a]/30 shadow-inner"
           autoFocus
         />

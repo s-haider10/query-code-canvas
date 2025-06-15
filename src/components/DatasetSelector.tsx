@@ -135,13 +135,31 @@ const DatasetSelector = ({
 
               <div>
                 <h4 className="text-sm font-semibold mb-1 text-zinc-400">Columns</h4>
-                <div className="flex flex-wrap gap-1.5">
+                {/* Horizontal scroll for columns, showing 5 at a time */}
+                <div
+                  className="flex gap-1.5 overflow-x-auto no-scrollbar"
+                  style={{
+                    maxWidth: "100%",
+                    paddingBottom: 2,
+                  }}
+                >
                   {columns.map((column: string, index: number) => (
-                    <Badge key={index} variant="outline" className="bg-zinc-800/80 border-zinc-700 text-zinc-100">
+                    <Badge
+                      key={index}
+                      variant="outline"
+                      className="bg-zinc-800/80 border-zinc-700 text-zinc-100 min-w-[80px] text-center whitespace-nowrap flex-shrink-0"
+                      style={{ flexBasis: "80px" }}
+                    >
                       {column}
                     </Badge>
                   ))}
                 </div>
+                {/* Optional: hint for more columns */}
+                {columns.length > 5 && (
+                  <div className="mt-1 text-xs text-zinc-500">
+                    Scroll horizontally to see more columns
+                  </div>
+                )}
               </div>
 
               <div>
@@ -161,3 +179,4 @@ const DatasetSelector = ({
 };
 
 export default DatasetSelector;
+

@@ -75,17 +75,21 @@ serve(async (req) => {
 
     // Parse the dataset to extract columns and a sample
     let columns: string[] = [];
-    let sample: any[] = [];
+    let sample: Record<string, any>[] = [];
     let rows = 0;
 
     if (fileExt === 'csv') {
       try {
-        // parse returns array of objects; { columns: true } means header row is used as column keys
-        const parsedData = parse(fileContent, { skipFirstRow: true, columns: true }) as any[];
-        if (Array.isArray(parsedData) && parsedData.length > 0) {
-          columns = Object.keys(parsedData[0]);
-          sample = parsedData.slice(0, 5);
-          rows = parsedData.length;
+        // Improved logic: Get header and then rows
+        // Split lines, skip empty lines forcibly
+        const lines = fileContent.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length > 1) {
+          const header = lines[0].split(',').map((h) => h.trim());
+          columns = header;
+          // parse csv body rows using csv.ts
+          const parsedData = parse(fileContent, { skipFirstRow: true, columns: true }) as any[];
+          sample = Array.isArray(parsedData) ? parsedData.slice(0, 5) : [];
+          rows = Array.isArray(parsedData) ? parsedData.length : 0;
         }
       } catch (e) {
         console.error("Failed to parse CSV file for metadata", e);
@@ -115,8 +119,11 @@ serve(async (req) => {
     }
 
     // Defensive: If columns/sample are objects, stringify them for DB
-    const columnsToSave = Array.isArray(columns) ? JSON.stringify(columns) : "[]";
-    const sampleToSave = Array.isArray(sample) ? JSON.stringify(sample) : "[]";
+    const columnsToSave = JSON.stringify(Array.isArray(columns) ? columns : []);
+    const sampleToSave = JSON.stringify(Array.isArray(sample) ? sample : []);
+
+    // Always set columns_count
+    const columnsCount = Array.isArray(columns) ? columns.length : 0;
 
     // Upload file to storage
     const filePath = `${user.id}/${Date.now()}-${file.name}`;
@@ -147,11 +154,11 @@ serve(async (req) => {
         file_path: urlData.publicUrl,
         file_type: fileExt,
         columns: columnsToSave,
-        columns_count: Array.isArray(columns) ? columns.length : 0,
+        columns_count: columnsCount,
         rows,
         user_id: user.id,
         sample: sampleToSave,
-        full_content: fileContent  // Store full dataset content
+        full_content: fileContent
       })
       .select()
       .single();

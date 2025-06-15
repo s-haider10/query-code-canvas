@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { DatasetChat, ChatMessage } from "@/types/dataset";
 import { useAuth } from "@/context/AuthContext";
@@ -215,7 +214,7 @@ const DatasetChatPanel = ({
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask a question about this dataset..."
             disabled={false}
-            className="rounded-full border-zinc-700 focus:border-[#4d818a] bg-zinc-950/90 px-4 py-2 text-base transition-shadow focus:ring-[#4d818a]/30 shadow-inner"
+            className="rounded-full border-zinc-700 focus:border-[#4d818a] bg-zinc-900/90 px-4 py-2 text-base transition-shadow focus:ring-[#4d818a]/30 shadow-inner"
             autoFocus
           />
           <Button
@@ -234,4 +233,3 @@ const DatasetChatPanel = ({
 };
 
 export default DatasetChatPanel;
-

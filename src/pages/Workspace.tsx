@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import GlobalNav from "@/components/GlobalNav";
 
 const Workspace = () => {
   const { user } = useAuth();
@@ -160,11 +161,10 @@ const Workspace = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-tr from-[#181924] via-[#23243c] to-[#181825] text-white">
+      <GlobalNav />
       <header className="flex items-center justify-between px-8 py-5 border-b border-zinc-800/80 backdrop-blur-lg sticky top-0 z-30 bg-[#191925]/80">
         <div className="flex items-center gap-3">
-          {/* Icon + Title for Workspace */}
           <span className="flex items-center gap-3">
-            {/* Make the Rocket icon clickable to go to /index */}
             <button
               type="button"
               onClick={() => navigate("/index")}
@@ -178,22 +178,9 @@ const Workspace = () => {
             </span>
           </span>
         </div>
-        {/* Profile button moved here from sidebar */}
-        <button
-          onClick={() => navigate("/profile")}
-          className="focus:outline-none"
-          title="Profile"
-        >
-          <Avatar className="h-10 w-10 border border-zinc-700 shadow">
-            <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.user_metadata?.full_name || user?.email} />
-            <AvatarFallback>{getUserInitials()}</AvatarFallback>
-          </Avatar>
-        </button>
       </header>
       <main className="flex flex-1 flex-col md:flex-row gap-6 p-6 max-w-7xl mx-auto w-full">
-        {/* Sidebar: Chat Sessions + Dataset picker */}
         <aside className="w-full md:w-80 bg-[#21222e]/70 backdrop-blur rounded-2xl shadow-lg border border-zinc-700/30 p-5 h-fit flex flex-col gap-5">
-          {/* Chat Sessions */}
           <div>
             <span className="text-xs text-zinc-400">Chat sessions:</span>
             <ScrollArea className="max-h-40 min-h-0 border border-transparent rounded mb-2 p-1">
@@ -285,7 +272,6 @@ const Workspace = () => {
                       )}
                     </div>
                   ))}
-                  {/* All chats in scroll */}
                   {chats.length > 3 && (
                     <div className="text-xs text-zinc-400 text-center p-1">Scroll for more</div>
                   )}
@@ -298,10 +284,8 @@ const Workspace = () => {
               + New Chat
             </Button>
           </div>
-          {/* Dataset List */}
           <div>
             <h3 className="text-lg font-bold mb-3 text-zinc-100">Your Datasets</h3>
-            {/* Move DatasetUploader here */}
             <div className="mb-4">
               <DatasetUploader onUploadComplete={refetch} />
             </div>
@@ -317,7 +301,6 @@ const Workspace = () => {
             )}
           </div>
         </aside>
-        {/* Main: Dataset Preview and Chat */}
         <section className="flex-1 flex flex-col gap-5">
           {!selectedDataset ? (
             <div className="flex flex-col items-center justify-center h-full border border-zinc-700/40 rounded-2xl bg-[#17171e]/60 p-14 shadow">

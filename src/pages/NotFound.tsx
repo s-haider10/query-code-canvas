@@ -1,11 +1,13 @@
 
 import { Link } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
+import GlobalNav from "@/components/GlobalNav";
 
 const NotFound = () => {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#17171a] to-[#181924] text-zinc-50">
-      <div className="bg-[#23243c]/80 border border-zinc-800 rounded-2xl shadow-xl p-10 md:p-16 flex flex-col items-center max-w-md mx-4">
+    <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-[#17171a] to-[#181924] text-zinc-50">
+      <GlobalNav />
+      <div className="bg-[#23243c]/80 border border-zinc-800 rounded-2xl shadow-xl p-10 md:p-16 flex flex-col items-center max-w-md mx-4 m-auto">
         <AlertTriangle size={48} className="text-yellow-400 mb-4" />
         <h1 className="text-5xl font-extrabold mb-4 tracking-tight drop-shadow-glow">404</h1>
         <p className="text-lg md:text-xl text-zinc-300 mb-6 text-center">

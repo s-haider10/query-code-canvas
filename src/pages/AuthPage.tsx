@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import BrandLogo from "@/components/BrandLogo";
+import GlobalNav from "@/components/GlobalNav";
 
 const AuthPage = () => {
   const [email, setEmail] = useState('');
@@ -54,7 +54,6 @@ const AuthPage = () => {
       toast({
         description: "Registration successful! You can now log in."
       });
-      // Switch to login tab (new users will need to check emails if confirm email is on)
       document.querySelector('[data-state="inactive"]')?.setAttribute('data-state', 'active');
       document.querySelector('[data-state="active"]')?.setAttribute('data-state', 'inactive');
     } catch (error: any) {
@@ -69,8 +68,9 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#14151a] via-[#191925] to-[#131417] px-4">
-      <div className="w-full max-w-md mx-auto animate-fade-in">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#14151a] via-[#191925] to-[#131417] px-4 text-white">
+      <GlobalNav />
+      <div className="w-full max-w-md mx-auto animate-fade-in flex-1 flex items-center">
         <Card className="bg-[#1a1a25]/90 border border-white/10 shadow-2xl rounded-3xl backdrop-blur-xl">
           <CardHeader className="text-center flex flex-col items-center gap-2 pt-8 pb-3">
             <BrandLogo />

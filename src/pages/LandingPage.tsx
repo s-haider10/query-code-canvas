@@ -1,7 +1,9 @@
+
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BrandLogo from "@/components/BrandLogo";
 import { BarChart, MessageSquare, CheckCircle } from "lucide-react";
+import GlobalNav from "@/components/GlobalNav";
 
 const features = [
   {
@@ -23,12 +25,7 @@ const features = [
 
 const LandingPage = () => (
   <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-[#14151a] via-[#181924] to-[#131417] text-white">
-    <header className="py-8 px-6 flex items-center gap-3 w-full max-w-4xl mx-auto">
-      <BrandLogo />
-      <span className="text-2xl font-extrabold tracking-tight ml-2 bg-gradient-to-r from-[#8f8ddb] via-[#445981] to-[#8bbeee] bg-clip-text text-transparent">
-        DEXA AI: Data Explorer
-      </span>
-    </header>
+    <GlobalNav />
     <main className="flex-1 flex flex-col items-center justify-center px-4 w-full">
       <h1 className="text-[2.3rem] md:text-6xl font-extrabold leading-tight text-center bg-gradient-to-br from-[#dbeafe] via-white to-[#c6efff] bg-clip-text text-transparent mb-5 drop-shadow mt-6">
         Instantly chat <br className="md:hidden"/> with your data.

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { DatasetChat, ChatMessage } from "@/types/dataset";
 import { useAuth } from "@/context/AuthContext";
@@ -16,12 +17,13 @@ const DatasetChatPanel = ({
   const { user } = useAuth();
   const {
     messages,
-    sendMessage,
     isLoading: messagesLoading,
     sending,
+    sendUserMessageWithAIReply,
   } = useChatMessages(chatId);
 
   const [input, setInput] = useState("");
+  const [aiThinking, setAIThinking] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Profile initials fallback
@@ -37,16 +39,25 @@ const DatasetChatPanel = ({
     return user.email?.charAt(0).toUpperCase() || "U";
   };
 
-  // Send a user message
+  // Fake data profile for now (if needed); in a real scenario fetch/send real profile
+  const generateFakeDataProfile = () => "Columns: [ID, Name, Age], ...";
+
+  // Send a user message + AI reply
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !chatId || !user) return;
-    await sendMessage({ role: "user", content: input, user_id: user.id });
+    setAIThinking(true);
+    // data_profile logic here (replace with actual implementation if needed)
+    const data_profile = generateFakeDataProfile();
+    await sendUserMessageWithAIReply({
+      user_id: user.id,
+      userContent: input,
+      data_profile,
+    });
     setInput("");
+    setAIThinking(false);
     inputRef.current?.focus();
   };
-
-  // The chat title editing, chat delete, and chat session list has been refactored into Workspace sidebar
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -75,6 +86,14 @@ const DatasetChatPanel = ({
                 </div>
               </div>
             ))}
+            {/* Show UI feedback while waiting for AI's reply */}
+            {aiThinking && (
+              <div className="flex justify-start">
+                <div className="rounded px-3 py-2 max-w-[70%] text-sm bg-zinc-800 text-zinc-200 flex items-center gap-2">
+                  <Loader2 className="animate-spin w-4 h-4" /> AI is thinking...
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -85,10 +104,10 @@ const DatasetChatPanel = ({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question about this dataset..."
-          disabled={!chatId || sending}
+          disabled={!chatId || sending || aiThinking}
         />
-        <Button type="submit" disabled={!chatId || !input.trim() || sending}>
-          {sending ? <Loader2 className="animate-spin w-4 h-4" /> : "Send"}
+        <Button type="submit" disabled={!chatId || !input.trim() || sending || aiThinking}>
+          {(sending || aiThinking) ? <Loader2 className="animate-spin w-4 h-4" /> : "Send"}
         </Button>
       </form>
     </div>

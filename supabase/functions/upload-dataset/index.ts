@@ -65,64 +65,81 @@ serve(async (req) => {
       );
     }
 
-    // Convert file to buffer
+    // Convert file to buffer and text
     const arrayBuffer = await file.arrayBuffer();
     const buffer = new Uint8Array(arrayBuffer);
-
-    // Extract file content as text
     const decoder = new TextDecoder('utf-8');
     const fileContent = decoder.decode(buffer);
 
-    // Parse the dataset to extract columns and a sample
+    // --- PARSE DATASET AND EXTRACT DETAILS ---
     let columns: string[] = [];
     let sample: Record<string, any>[] = [];
     let rows = 0;
 
     if (fileExt === 'csv') {
       try {
-        // Improved logic: Get header and then rows
-        // Split lines, skip empty lines forcibly
+        // Split CSV lines for sample extraction
         const lines = fileContent.split(/\r?\n/).filter(l => l.trim());
         if (lines.length > 1) {
-          const header = lines[0].split(',').map((h) => h.trim());
+          // Extract columns from header
+          const header = lines[0].split(',').map(h => h.trim());
           columns = header;
-          // parse csv body rows using csv.ts
+
+          // Parse CSV rows for sample, columns, rows
           const parsedData = parse(fileContent, { skipFirstRow: true, columns: true }) as any[];
           sample = Array.isArray(parsedData) ? parsedData.slice(0, 5) : [];
           rows = Array.isArray(parsedData) ? parsedData.length : 0;
         }
       } catch (e) {
-        console.error("Failed to parse CSV file for metadata", e);
         columns = [];
         sample = [];
         rows = 0;
       }
     } else if (fileExt === 'json') {
       try {
-        const parsedData = JSON.parse(fileContent);
-        if (Array.isArray(parsedData) && parsedData.length > 0) {
-          columns = Object.keys(parsedData[0]);
-          sample = parsedData.slice(0, 5);
-          rows = parsedData.length;
+        const parsedJson = JSON.parse(fileContent);
+        if (Array.isArray(parsedJson) && parsedJson.length > 0) {
+          columns = Object.keys(parsedJson[0]);
+          sample = parsedJson.slice(0, 5);
+          rows = parsedJson.length;
         }
       } catch (e) {
-        console.error("Failed to parse JSON file for metadata", e);
         columns = [];
         sample = [];
         rows = 0;
       }
-    } else {
-      // For Excel, do not process here
-      columns = [];
-      sample = [];
-      rows = 0;
+    } else if (fileExt === 'xls' || fileExt === 'xlsx') {
+      // Excel support
+      try {
+        // Use SheetJS CDN from Deno if available
+        // https://cdn.sheetjs.com/xlsx-0.19.3/package/xlsx.full.min.js
+        const XLSXmod = await import("https://cdn.sheetjs.com/xlsx-0.19.3/package/xlsx.mjs");
+        const workbook = XLSXmod.read(buffer, { type: "array" });
+        const wsname = workbook.SheetNames[0];
+        const ws = workbook.Sheets[wsname];
+        const data = XLSXmod.utils.sheet_to_json(ws, { header: 1 });
+
+        if (Array.isArray(data) && data.length > 1) {
+          columns = data[0] as string[];
+          rows = data.length - 1;
+          // Map to array of objects for sample display
+          const recordsArr = data.slice(1).map((row: any[]) =>
+            Object.fromEntries(
+              columns.map((col, idx) => [col, row[idx]])
+            )
+          );
+          sample = recordsArr.slice(0, 5);
+        }
+      } catch (e) {
+        columns = [];
+        sample = [];
+        rows = 0;
+      }
     }
 
-    // Defensive: If columns/sample are objects, stringify them for DB
+    // --- ALWAYS JSON.stringify for DB columns ---
     const columnsToSave = JSON.stringify(Array.isArray(columns) ? columns : []);
     const sampleToSave = JSON.stringify(Array.isArray(sample) ? sample : []);
-
-    // Always set columns_count
     const columnsCount = Array.isArray(columns) ? columns.length : 0;
 
     // Upload file to storage

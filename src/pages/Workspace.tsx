@@ -164,9 +164,15 @@ const Workspace = () => {
         <div className="flex items-center gap-3">
           {/* Icon + Title for Workspace */}
           <span className="flex items-center gap-3">
-            <div className="rounded-lg bg-gradient-to-tr from-[#8f8ddb] via-[#445981] to-[#8bbeee] flex items-center justify-center w-10 h-10 shadow">
+            {/* Make the Rocket icon clickable to go to /index */}
+            <button
+              type="button"
+              onClick={() => navigate("/index")}
+              className="rounded-lg bg-gradient-to-tr from-[#8f8ddb] via-[#445981] to-[#8bbeee] flex items-center justify-center w-10 h-10 shadow focus:outline-none focus:ring-2 focus:ring-blue-400/70 transition ring-offset-2"
+              title="Go to Index"
+            >
               <Rocket size={22} className="text-white" />
-            </div>
+            </button>
             <span className="text-2xl font-bold text-white tracking-wide drop-shadow-glow">
               DEXA Workspace
             </span>

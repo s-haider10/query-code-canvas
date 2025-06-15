@@ -5,7 +5,7 @@ import DatasetChatPanel from "@/components/DatasetChatPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDatasets } from "@/lib/api-service";
-import { Loader2 } from "lucide-react";
+import { Loader2, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDatasetChats } from "@/hooks/useDatasetChats";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -162,8 +162,14 @@ const Workspace = () => {
     <div className="flex flex-col min-h-screen bg-gradient-to-tr from-[#181924] via-[#23243c] to-[#181825] text-white">
       <header className="flex items-center justify-between px-8 py-5 border-b border-zinc-800/80 backdrop-blur-lg sticky top-0 z-30 bg-[#191925]/80">
         <div className="flex items-center gap-3">
-          <span className="text-2xl font-bold text-white tracking-wide">
-            DEXA Workspace
+          {/* Icon + Title for Workspace */}
+          <span className="flex items-center gap-3">
+            <div className="rounded-lg bg-gradient-to-tr from-[#8f8ddb] via-[#445981] to-[#8bbeee] flex items-center justify-center w-10 h-10 shadow">
+              <Rocket size={22} className="text-white" />
+            </div>
+            <span className="text-2xl font-bold text-white tracking-wide drop-shadow-glow">
+              DEXA Workspace
+            </span>
           </span>
         </div>
         {/* Profile button moved here from sidebar */}
